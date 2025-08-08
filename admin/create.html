@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Coding组管理员账号创建 | C++ Coding组</title>
+    <link rel="icon" href="https://mr-onion-blog.fun/img/avatar.png" type="image/png">
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 设置全局字体为 Inter，并提供一个备用字体 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* 浅灰色背景 */
+        }
+        /* 通知框的初始隐藏状态和过渡效果 */
+        .notification-hidden {
+            transform: translateY(-100%); /* 初始位置在顶部之外 */
+            opacity: 0;
+            visibility: hidden;
+        }
+        .notification-visible {
+            transform: translateY(0); /* 显示时滑入 */
+            opacity: 1;
+            visibility: visible;
+        }
+        /* 确保 SVG 进度条的动画平滑 */
+        #timer-progress {
+            /* 移除原有的 CSS transition，动画将由 JS 控制，以实现更平滑的每帧更新 */
+        }
+        /* 添加颜色过渡，使颜色变化更平滑 */
+        #timer-background, #timer-progress {
+            transition: stroke 0.5s ease-in-out; /* 颜色过渡效果 */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen p-4">
+
+    <!-- 顶部通知框 -->
+    <div id="notification-box" class="fixed top-0 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-out z-50
+                                     bg-green-500 text-white p-4 rounded-b-lg shadow-lg flex items-center space-x-3
+                                     notification-hidden">
+        <!-- 勾选图标 (SVG) -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span id="notification-message" class="text-lg font-semibold">操作成功</span>
+    </div>
+
+    <!-- 主内容区域容器 -->
+    <div class="flex-grow flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">用户认证</h1>
+
+            <div id="auth-section">
+                <input type="email" id="email-input" placeholder="邮箱"
+                       class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="password-input" placeholder="密码"
+                       class="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <!-- 2FA 验证码手动输入框 -->
+                <div class="flex items-center bg-gray-100 p-3 rounded-lg mb-4"> 
+                    <span class="text-gray-700 font-semibold flex-shrink-0 mr-2">2FA 验证码:</span> 
+                    <input type="text" id="otp-input" value="" maxlength="6"
+                           class="text-2xl font-mono text-gray-800 flex-grow text-right bg-transparent focus:outline-none"> 
+                </div>
+
+                <!-- 大圈计时器区域 -->
+                <p class="text-gray-700 font-semibold mb-2">验证码剩余有效时间</p> 
+                <div class="relative w-40 h-40 mx-auto mb-12"> 
+                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                        <!-- 计时器背景圆环 -->
+                        <circle id="timer-background" class="text-gray-200" stroke-width="8" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
+                        <!-- 计时器进度圆环 -->
+                        <circle id="timer-progress" class="text-blue-500" stroke-width="8" stroke-dasharray="282.74 282.74" stroke-dashoffset="282.74" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <!-- 剩余时间显示在圆圈中间 -->
+                    <div id="countdown-display" class="absolute inset-0 flex items-center justify-center text-5xl font-bold text-gray-800 leading-none">
+                        30
+                    </div>
+                </div>
+
+                <button id="authenticate-btn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    认证
+                </button>
+                <p id="auth-error-message" class="mt-4 text-red-600 hidden"></p>
+            </div>
+
+            <!-- 加载消息 -->
+            <p id="loading-message" class="mt-4 text-gray-600 hidden">正在处理...</p>
+        </div>
+    </div>
+
+    <!-- Developer Info Footer -->
+    <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
+        <div class="container mx-auto">
+            <p>开发者信息：Mr_Onion</p>
+            <p>联系邮箱：admin@mr-onion-blog.fun</p>
+            <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
+            <p class="mt-2">&copy; 2025 C++ Coding组题目审核后台. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script type="module">
+        // 获取 DOM 元素的引用
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const otpInput = document.getElementById('otp-input'); // 2FA 验证码输入框
+        const authenticateBtn = document.getElementById('authenticate-btn');
+        const authErrorMessage = document.getElementById('auth-error-message');
+        const loadingMessage = document.getElementById('loading-message');
+        const notificationBox = document.getElementById('notification-box');
+        const notificationMessage = document.getElementById('notification-message');
+        const timerProgress = document.getElementById('timer-progress'); // 计时器进度条
+        const timerBackground = document.getElementById('timer-background'); // 计时器背景
+        const countdownDisplay = document.getElementById('countdown-display'); // 倒计时数字显示
+
+        // --- 配置 Cloudflare Worker URL ---
+        // !!! 重要：请将此 URL 替换为您部署的 Cloudflare Worker 的实际 URL。
+        // !!! 例如：'https://your-auth-worker.your-username.workers.dev'
+        // !!! 确保此 HTML 页面也通过 HTTPS 提供服务，以避免混合内容错误。
+        const AUTH_WORKER_URL = 'https://codingadmincreate.mr-onion-blog.fun'; // <-- 请替换此占位符！
+        const AUTHENTICATE_API_URL = `${AUTH_WORKER_URL}/api/authenticate`;
+
+        // --- 全局变量 ---
+        const PERIOD = 30; // TOTP 的时间步长（秒）
+        const SVG_CIRCLE_RADIUS = 45; // SVG 圆环的半径 (与 Worker CSS 保持一致)
+        const CIRCUMFERENCE = 2 * Math.PI * SVG_CIRCLE_RADIUS; // SVG 圆环的周长
+
+        let animationFrameId; // 用于 requestAnimationFrame 的 ID
+        let startTime; // 动画开始的时间戳
+        let initialTimeRemaining; // 当前周期开始时的剩余秒数
+        
+        let isBlueTheme = false; // 用于跟踪当前是否为蓝色主题（蓝底灰进度条）
+
+        // --- 辅助函数：SHA-256 哈希 ---
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message); // 将字符串编码为 UTF-8
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); // 哈希消息
+            const hashArray = Array.from(new Uint8Array(hashBuffer)); // 将 ArrayBuffer 转换为字节数组
+            const hexHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // 将字节转换为十六进制字符串
+            return hexHash;
+        }
+
+        /**
+         * 显示顶部通知框。
+         * @param {string} message - 要显示的通知消息。
+         * @param {string} type - 通知类型 ('success' 或 'error')。
+         */
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            if (type === 'success') {
+                notificationBox.classList.remove('bg-red-500');
+                notificationBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                notificationBox.classList.remove('bg-green-500');
+                notificationBox.classList.add('bg-red-500');
+            }
+            notificationBox.classList.remove('notification-hidden');
+            notificationBox.classList.add('notification-visible');
+            setTimeout(() => {
+                notificationBox.classList.remove('notification-visible');
+                notificationBox.classList.add('notification-hidden');
+            }, 2500);
+        }
+
+        /**
+         * 更新圆环的颜色主题。
+         * @param {boolean} isBlueThemeActive - 如果为 true，则应用蓝底灰进度条主题；否则应用灰底蓝进度条主题。
+         */
+        function applyTheme(isBlueThemeActive) {
+            if (isBlueThemeActive) {
+                timerBackground.classList.remove('text-gray-200');
+                timerBackground.classList.add('text-blue-500');
+                timerProgress.classList.remove('text-blue-500', 'text-white');
+                timerProgress.classList.add('text-gray-200');
+            } else {
+                timerBackground.classList.remove('text-blue-500');
+                timerBackground.classList.add('text-gray-200');
+                timerProgress.classList.remove('text-gray-200', 'text-white');
+                timerProgress.classList.add('text-blue-500');
+            }
+        }
+
+        /**
+         * 更新计时器显示（SVG 进度条）。
+         * @param {number} timeMs - 剩余时间（毫秒）。
+         */
+        function updateTimerDisplay(timeMs) {
+            const currentSeconds = Math.max(0, Math.ceil(timeMs / 1000)); // Ensure it doesn't go below 0
+            countdownDisplay.textContent = currentSeconds; // Update the number in the center
+            const progressRatio = timeMs / (PERIOD * 1000);
+            // 进度条从满到空，所以 dashoffset 应该从 0 增加到 CIRCUMFERENCE
+            const dashoffset = CIRCUMFERENCE * (1 - progressRatio);
+            timerProgress.style.strokeDashoffset = dashoffset;
+        }
+
+        /**
+         * 驱动计时器动画的函数，由 requestAnimationFrame 调用。
+         * @param {DOMHighResTimeStamp} currentTime - 当前时间戳。
+         */
+        function animateTimer(currentTime) {
+            const elapsedTime = currentTime - startTime;
+            const remainingTimeMs = initialTimeRemaining * 1000 - elapsedTime;
+            
+            updateTimerDisplay(remainingTimeMs);
+
+            if (remainingTimeMs > 0) {
+                animationFrameId = requestAnimationFrame(animateTimer);
+            } else {
+                // 计时结束，重新开始计时并切换主题
+                startCountdown();
+                isBlueTheme = !isBlueTheme; // 切换主题状态
+                applyTheme(isBlueTheme);    // 应用新的主题
+            }
+        }
+
+        /**
+         * 启动倒计时计时器。
+         */
+        function startCountdown() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            const epoch = Math.floor(Date.now() / 1000);
+            initialTimeRemaining = PERIOD - (epoch % PERIOD);
+            startTime = performance.now();
+            animationFrameId = requestAnimationFrame(animateTimer);
+        }
+        
+        /**
+         * 处理认证逻辑。
+         */
+        authenticateBtn.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const totpCode = otpInput.value; // 从输入框获取 2FA 验证码
+
+            // 获取 TOTP 计算所需的时间戳 (timeStep)
+            const totpTimestamp = Math.floor(Date.now() / 1000 / PERIOD);
+
+            // 验证输入
+            if (!email || !password || !totpCode) {
+                authErrorMessage.textContent = '请填写所有字段。';
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // 简单的 2FA 验证码格式检查 (可选)
+            if (!/^\d{6}$/.test(totpCode)) {
+                authErrorMessage.textContent = '2FA 验证码必须是 6 位数字。';
+                authErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            authenticateBtn.disabled = true;
+            loadingMessage.classList.remove('hidden');
+            authErrorMessage.classList.add('hidden');
+
+            // --- 重要：检查前端是否通过 HTTPS 提供服务 ---
+            if (window.location.protocol !== 'https:' && AUTH_WORKER_URL.startsWith('https://')) {
+                authErrorMessage.textContent = '安全错误：此页面必须通过 HTTPS 提供服务才能与 Cloudflare Worker 通信。';
+                authErrorMessage.classList.remove('hidden');
+                authenticateBtn.disabled = false;
+                loadingMessage.classList.add('hidden');
+                console.error('混合内容阻止：前端是 HTTP/file，Worker 是 HTTPS。请通过 HTTPS 提供此 HTML。');
+                return;
+            }
+
+            try {
+                // 1. 本地计算密码的 SHA-256 哈希
+                const hashedPassword = await sha256(password);
+                
+                // 2. 本地计算 2FA 验证码的 SHA-256 哈氏
+                const hashedTotp = await sha256(totpCode);
+
+                const response = await fetch(AUTHENTICATE_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        hashedPassword: hashedPassword,
+                        hashedTotp: hashedTotp,
+                        totpTimestamp: totpTimestamp // 发送时间戳用于 Worker 端计算
+                    })
+                });
+
+                if (!response.ok) {
+                    let errorDetails = '未知错误';
+                    try {
+                        const errorData = await response.json();
+                        errorDetails = errorData.message || errorData.details || `HTTP 状态码: ${response.status}`;
+                    } catch (e) {
+                        errorDetails = await response.text() || `HTTP 状态码: ${response.status} (非 JSON 响应)`;
+                    }
+                    throw new Error(errorDetails);
+                }
+
+                const data = await response.json();
+                showNotification(data.message || '认证成功！', 'success');
+                console.log("认证成功:", data);
+
+            } catch (error) {
+                console.error('认证失败:', error);
+                authErrorMessage.textContent = `认证失败: ${error.message}`;
+                authErrorMessage.classList.remove('hidden');
+                showNotification(`认证失败: ${error.message}`, 'error');
+            } finally {
+                authenticateBtn.disabled = false;
+                loadingMessage.classList.add('hidden');
+            }
+        });
+
+        // 页面加载完成后，启动计时器
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始应用主题
+            applyTheme(isBlueTheme);
+            // 启动计时器
+            startCountdown();
+        });
+    </script>
+</body>
+</html>
