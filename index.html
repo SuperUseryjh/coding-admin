@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Coding组题目审核系统</title>
+    <!-- Favicon from a fixed CDN site (PNG format) -->
+    <link rel="icon" href="https://mr-onion-blog.fun/img/avatar.png" type="image/png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "7b99124a18f04b2e8d3a32950ebea032"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for the message box */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-align: center;
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+        /* Custom table styles for query results */
+        #queryResult table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            overflow: hidden; /* Ensures rounded corners apply to table content */
+        }
+        #queryResult th, #queryResult td {
+            padding: 0.75rem 1rem; /* px-4 py-2 equivalent */
+            border: 1px solid #e5e7eb; /* border-gray-300 equivalent */
+            text-align: left;
+        }
+        #queryResult th {
+            background-color: #f9fafb; /* bg-gray-50 equivalent */
+            font-weight: 600;
+            color: #4b5563; /* text-gray-600 equivalent */
+            text-transform: uppercase;
+            font-size: 0.75rem; /* text-xs equivalent */
+            letter-spacing: 0.05em; /* tracking-wider equivalent */
+        }
+        #queryResult tbody tr:nth-child(even) {
+            background-color: #f3f4f6; /* bg-gray-100 equivalent for alternating rows */
+        }
+        #queryResult tbody tr:hover {
+            background-color: #e5eeef; /* hover:bg-gray-100 equivalent */
+        }
+        #queryResult td {
+            color: #374151; /* text-gray-700 equivalent */
+            font-size: 0.875rem; /* text-sm equivalent */
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
+    <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-2 text-gray-800">C++ Coding组题目审核系统</h1>
+        <!-- Subtitle added here -->
+        <p class="text-center text-gray-600 text-lg mb-4">限审核C++ Coding组题目，其他一律打回</p>
+        <p class="text-center text-gray-600 mb-8">公平 · 公正 · 公开</p>
+
+        <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">提交题目申请</h2>
+        <div class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <h3 class="text-xl font-medium mb-4 text-gray-700">负责人信息 & 题目信息</h3>
+            <form id="submissionForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <!-- 负责人信息 -->
+                <div>
+                    <label for="ojName" class="block text-sm font-medium text-gray-700 mb-1">OJ昵称</label>
+                    <input type="text" id="ojName" name="ojName" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="uid" class="block text-sm font-medium text-gray-700 mb-1">UID</label>
+                    <input type="text" id="uid" name="uid" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                    <input type="email" id="email" name="email" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="awards" class="block text-sm font-medium text-gray-700 mb-1">获奖经历</label>
+                    <textarea id="awards" name="awards" rows="3"
+                              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+
+                <!-- 题目信息 -->
+                <div>
+                    <label for="questionTitle" class="block text-sm font-medium text-gray-700 mb-1">题目标题</label>
+                    <input type="text" id="questionTitle" name="questionTitle" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="questionAuthor" class="block text-sm font-medium text-gray-700 mb-1">出题人</label>
+                    <input type="text" id="questionAuthor" name="questionAuthor" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="questionDifficulty" class="block text-sm font-medium text-gray-700 mb-1">难度</label>
+                    <select id="questionDifficulty" name="questionDifficulty"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="easy">入门</option>
+                        <option value="medium">普及-</option>
+                        <option value="hard">普及/提高-</option>
+                        <option value="qwe">普及+/提高</option>
+                        <option value="df">提高+/省选-</option>
+                        <option value="noi">省选/NOI-</option>
+                        <option value="ctsc">NOI/NOI+CTSC</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="questionDescription" class="block text-sm font-medium text-gray-700 mb-1">题目描述（善用MarkDown）</label>
+                    <textarea id="questionDescription" name="questionDescription" rows="5" required
+                              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="dataPackage" class="block text-sm font-medium text-gray-700 mb-1">数据包（请上传zip文件，大小不得超过10KB）</label>
+                    <input type="file" id="dataPackage" name="dataPackage" accept=".zip" required
+                           class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                                  file:rounded-full file:border-0 file:text-sm file:font-semibold
+                                  file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+
+                <div class="md:col-span-2 flex justify-center">
+                    <button type="button" onclick="submitQuestion()"
+                            class="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                   transition duration-150 ease-in-out">
+                        提交题目申请
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">查询结果</h2>
+        <div class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <form id="queryForm" class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <label for="queryEmail" class="text-sm font-medium text-gray-700">请输入您的邮箱</label>
+                <input type="email" id="queryEmail" name="queryEmail" required
+                       class="flex-grow px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <button type="button" onclick="submitQuery()"
+                        class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
+                               hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                               transition duration-150 ease-in-out">
+                    查询结果
+                </button>
+            </form>
+            <div id="queryResult" class="mt-6 p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-center hidden">
+                <!-- Query results will be displayed here as a table -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Info Footer -->
+    <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
+        <div class="container mx-auto">
+            <p>开发者信息：Mr_Onion</p>
+            <p>联系邮箱：admin@mr-onion-blog.fun</p>
+            <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
+            <p class="mt-2">&copy; 2025 C++ Coding组题目审核系统. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Message Box Overlay -->
+    <div id="messageBoxOverlay" class="message-box-overlay"></div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageBoxContent" class="text-lg font-medium text-gray-800 mb-4"></p>
+        <button onclick="closeMessageBox()"
+                class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                       hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                       transition duration-150 ease-in-out">
+            确定
+        </button>
+    </div>
+
+    <script>
+        // IMPORTANT: Replace this with the actual base URL of your Cloudflare Worker.
+        // Example: const WORKER_BASE_URL = "https://your-worker-name.your-username.workers.dev";
+        const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+
+        /**
+         * Maps English status values to Chinese equivalents.
+         * @param {string} status - The English status string.
+         * @returns {string} The corresponding Chinese status string.
+         */
+        function getChineseStatus(status) {
+            switch (status) {
+                case 'pending':
+                    return '待审核';
+                case 'approved':
+                    return '已通过';
+                case 'rejected':
+                    return '已拒绝';
+                default:
+                    return '未知状态';
+            }
+        }
+
+        /**
+         * Maps English difficulty values to Chinese equivalents.
+         * @param {string} difficulty - The English difficulty string.
+         * @returns {string} The corresponding Chinese difficulty string.
+         */
+        function getChineseDifficulty(difficulty) {
+            switch (difficulty) {
+                case 'easy':
+                    return '入门';
+                case 'medium':
+                    return '普及-';
+                case 'hard':
+                    return '普及/提高-';
+                case 'qwe':
+                    return '普及+/提高';
+                case 'df':
+                    return '提高+/省选-';
+                case 'noi':
+                    return '省选/NOI-';
+                case 'ctsc':
+                    return 'NOI/NOI+CTSC';
+                default:
+                    return '未知难度';
+            }
+        }
+
+        /**
+         * Displays a custom message box instead of the browser's alert.
+         * @param {string} message - The message to display.
+         */
+        function showMessageBox(message) {
+            document.getElementById('messageBoxContent').textContent = message;
+            document.getElementById('messageBoxOverlay').style.display = 'block';
+            document.getElementById('messageBox').style.display = 'block';
+        }
+
+        /**
+         * Hides the custom message box.
+         */
+        function closeMessageBox() {
+            document.getElementById('messageBoxOverlay').style.display = 'none';
+            document.getElementById('messageBox').style.display = 'none';
+        }
+
+        /**
+         * Handles the submission of the question application form.
+         * Collects all form data and sends it to the Cloudflare Worker via a POST request.
+         */
+        function submitQuestion() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const formData = new FormData();
+            // Append all form fields to the FormData object
+            formData.append('ojName', document.getElementById('ojName').value);
+            formData.append('uid', document.getElementById('uid').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('awards', document.getElementById('awards').value);
+            formData.append('questionTitle', document.getElementById('questionTitle').value);
+            formData.append('questionAuthor', document.getElementById('questionAuthor').value);
+            formData.append('questionDifficulty', document.getElementById('questionDifficulty').value);
+            formData.append('questionDescription', document.getElementById('questionDescription').value);
+
+            // Check if a file is selected before appending
+            const dataPackageInput = document.getElementById('dataPackage');
+            if (dataPackageInput.files.length > 0) {
+                formData.append('dataPackage', dataPackageInput.files[0]);
+            } else {
+                showMessageBox('请上传数据包文件。');
+                return; // Stop the submission if no file is selected
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/submit`;
+            console.log('Submitting question to:', fetchURL); // 打印请求URL
+
+            fetch(fetchURL, {
+                method: 'POST',
+                body: formData // FormData会自动设置Content-Type为multipart/form-data
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessageBox(data.message); // Use custom message box
+                // 提交成功后可以清空表单
+                document.getElementById('submissionForm').reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessageBox('提交过程中发生错误。错误详情: ' + error.message); // Use custom message box for errors
+            });
+        }
+
+        /**
+         * Handles the query for submission results based on email.
+         * Sends the query to the Cloudflare Worker.
+         */
+        function submitQuery() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const email = document.getElementById('queryEmail').value.trim();
+            const queryResultDiv = document.getElementById('queryResult');
+            queryResultDiv.innerHTML = ''; // Clear previous results
+            queryResultDiv.classList.add('hidden'); // Hide until results are ready
+
+            if (!email) {
+                showMessageBox('请输入您的邮箱进行查询。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/query?email=${encodeURIComponent(email)}`;
+            console.log('Querying status from:', fetchURL); // 打印请求URL
+
+            fetch(fetchURL)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.questions && data.questions.length > 0) {
+                    // Create table elements
+                    const table = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    const tbody = document.createElement('tbody');
+                    const headerRow = document.createElement('tr');
+
+                    // Define table headers
+                    const headers = ['题目标题', '出题人', '难度', '状态', '审核意见', '提交时间'];
+                    headers.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    // Populate table body with question data
+                    data.questions.forEach(q => {
+                        const row = document.createElement('tr');
+
+                        const titleCell = document.createElement('td');
+                        titleCell.textContent = q.questionTitle || 'N/A';
+                        row.appendChild(titleCell);
+
+                        const authorCell = document.createElement('td');
+                        authorCell.textContent = q.questionAuthor || 'N/A';
+                        row.appendChild(authorCell);
+
+                        const difficultyCell = document.createElement('td');
+                        difficultyCell.textContent = getChineseDifficulty(q.questionDifficulty); // Use Chinese difficulty
+                        row.appendChild(difficultyCell);
+
+                        const statusCell = document.createElement('td');
+                        statusCell.textContent = getChineseStatus(q.status); // Display the translated status
+                        row.appendChild(statusCell);
+
+                        const commentCell = document.createElement('td');
+                        commentCell.textContent = q.comment || '无';
+                        row.appendChild(commentCell);
+
+                        const submissionDateCell = document.createElement('td');
+                        if (q.submissionDate) {
+                            const date = new Date(q.submissionDate);
+                            submissionDateCell.textContent = date.toLocaleString();
+                        } else {
+                            submissionDateCell.textContent = '未知';
+                        }
+                        row.appendChild(submissionDateCell);
+
+                        tbody.appendChild(row);
+                    });
+                    table.appendChild(tbody);
+
+                    // Append table to the queryResult div
+                    queryResultDiv.appendChild(table);
+                    queryResultDiv.classList.remove('hidden'); // Show the result div
+                    queryResultDiv.classList.remove('text-center'); // Remove center alignment for table
+                    queryResultDiv.classList.remove('bg-blue-50', 'border-blue-200', 'text-blue-800'); // Remove previous styling
+                    queryResultDiv.classList.add('p-0', 'border-0', 'shadow-none'); // Adjust padding/border for table container
+
+                } else if (data.message) {
+                    // If no questions but a message is returned (e.g., "未找到该邮箱提交的题目")
+                    queryResultDiv.textContent = data.message;
+                    queryResultDiv.classList.remove('hidden');
+                    queryResultDiv.classList.add('text-center', 'bg-blue-50', 'border-blue-200', 'text-blue-800'); // Re-add styling for simple message
+                } else {
+                    // Fallback for unexpected data structure
+                    queryResultDiv.textContent = '查询失败或无结果。';
+                    queryResultDiv.classList.remove('hidden');
+                    queryResultDiv.classList.add('text-center', 'bg-blue-50', 'border-blue-200', 'text-blue-800'); // Re-add styling for simple message
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                queryResultDiv.textContent = '查询过程中发生错误。错误详情: ' + error.message;
+                queryResultDiv.classList.remove('hidden'); // Show the result div
+                queryResultDiv.classList.add('text-center', 'bg-blue-50', 'border-blue-200', 'text-blue-800'); // Re-add styling for error message
+            });
+        }
+    </script>
+</body>
+</html>
