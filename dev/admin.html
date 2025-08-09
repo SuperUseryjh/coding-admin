@@ -158,13 +158,7 @@
                         <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
                             <thead>
                                 <tr>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目ID</th>
                                     <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                 </tr>
                             </thead>
@@ -175,36 +169,39 @@
                     </div>
                 </div>
 
-                <!-- 题目列表部分 -->
-                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
-                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
-                    <div class="flex justify-center mb-4 space-x-4">
-                        <select id="statusFilter" onchange="loadQuestions()"
-                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="pending">待审核</option>
-                            <option value="approved">已通过</option>
-                            <option value="rejected">已拒绝</option>
-                            <option value="all">所有题目</option>
-                        </select>
+                <!-- 题目详情部分 -->
+                <div id="questionDetailsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目详情</h2>
+                    <div id="questionDetailsContent" class="text-gray-700">
+                        <!-- 题目详细信息将在这里加载 -->
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                            <thead>
-                                <tr>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="questionsTable" class="divide-y divide-gray-200">
-                                <!-- 数据将通过AJAX动态加载 -->
-                            </tbody>
-                        </table>
+                    <div class="mt-6 flex justify-center space-x-4">
+                        <button onclick="showSection('questionsSection')"
+                                class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            返回题目列表
+                        </button>
+                        <button id="approveDetailBtn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            通过
+                        </button>
+                        <button id="rejectDetailBtn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            拒绝
+                        </button>
+                        <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            下载描述
+                        </button>
+                        <button id="downloadDataDetailBtn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            下载数据包
+                        </button>
                     </div>
                 </div>
 
@@ -269,6 +266,12 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- 管理员工具部分 (保留但无内容) -->
+                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
+                    <p class="text-center text-gray-500">请从左侧导航选择具体工具。</p>
                 </div>
             </div>
         </div>
