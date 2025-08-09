@@ -83,12 +83,27 @@
         th {
             background-color: #f9fafb; /* Equivalent to bg-gray-50 */
         }
+        /* Sidebar navigation styles */
+        .sidebar-nav-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        .sidebar-nav-item:hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        .sidebar-nav-item.active {
+            background-color: #d1d5db; /* gray-300 */
+            font-weight: 600;
+            color: #1f2937; /* gray-900 */
+        }
     </style>
 </head>
 <body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
     <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
         <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组题目审核后台</h1>
-        <p class="text-center text-gray-600 mb-8">管理员可以在这里审核提交的题目。</p>
+        <p class="text-center text-gray-600 mb-8">管理员可   在这里审核提交的题目。</p>
 
         <!-- 管理员登录表单 -->
         <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员登录</h2>
@@ -113,100 +128,114 @@
             </button>
         </form>
 
-        <!-- 待审核题目列表 -->
-        <div id="adminPanel" class="hidden">
-            <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
-            <div class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
-                <div class="flex justify-center mb-4 space-x-4">
-                    <select id="statusFilter" onchange="loadQuestions()"
-                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option value="pending">待审核</option>
-                        <option value="approved">已通过</option>
-                        <option value="rejected">已拒绝</option>
-                        <option value="all">所有题目</option>
-                    </select>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
-                                <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="questionsTable" class="divide-y divide-gray-200">
-                            <!-- 数据将通过AJAX动态加载 -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <!-- 管理员面板 - 包含侧边栏和内容区域 -->
+        <div id="adminPanel" class="hidden flex flex-col md:flex-row gap-8">
+            <!-- 左侧导航栏 -->
+            <nav class="w-full md:w-1/4 bg-gray-50 p-4 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">导航</h3>
+                <ul>
+                    <li class="sidebar-nav-item active" data-section="questionsSection">题目列表</li>
+                    <li class="sidebar-nav-item" data-section="adminToolsSection">管理员工具</li>
+                </ul>
+            </nav>
 
-            <!-- Admin Tools Section -->
-            <h2 class="text-2xl font-semibold text-center mb-6 mt-8 text-gray-700">管理员工具</h2>
-            <div class="section p-6 border border-gray-200 rounded-lg shadow-sm">
-                <!-- IP Blacklist Management Sub-section -->
-                <h3 class="text-xl font-semibold text-gray-700 mb-4">IP 黑名单管理</h3>
-                <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
-                    <div>
-                        <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
-                        <input type="text" id="ipInput" placeholder="例如: 192.168.1.1"
-                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <!-- 右侧内容区域 -->
+            <div class="w-full md:w-3/4 bg-white p-0 rounded-lg shadow-none">
+                <!-- 题目列表部分 -->
+                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <select id="statusFilter" onchange="loadQuestions()"
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="pending">待审核</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="all">所有题目</option>
+                        </select>
                     </div>
-                    <div class="flex justify-center space-x-4">
-                        <button type="button" onclick="addIpToBlacklist()"
-                                class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
-                                       hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
-                                       transition duration-150 ease-in-out">
-                            加入黑名单
-                        </button>
-                        <button type="button" onclick="removeIpFromBlacklist()"
-                                class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
-                                       hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
-                                       transition duration-150 ease-in-out">
-                            从黑名单移除
-                        </button>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionsTable" class="divide-y divide-gray-200">
+                                <!-- 数据将通过AJAX动态加载 -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
-                <div class="overflow-x-auto mb-8">
-                    <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
-                        <!-- Blacklisted IPs will be loaded here -->
-                        <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
-                    </ul>
-                </div>
+                <!-- 管理员工具部分 -->
+                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
 
-                <!-- Change Password Sub-section -->
-                <h3 class="text-xl font-semibold text-gray-700 mb-4 mt-8">修改管理员密码</h3>
-                <div class="flex flex-col gap-4 max-w-md mx-auto">
-                    <div>
-                        <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
-                        <input type="password" id="currentPassword" required
-                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <!-- IP Blacklist Management Sub-section -->
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">IP 黑名单管理</h3>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
+                        <div>
+                            <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
+                            <input type="text" id="ipInput" placeholder="例如: 192.168.1.1"
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center space-x-4">
+                            <button type="button" onclick="addIpToBlacklist()"
+                                    class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                加入黑名单
+                            </button>
+                            <button type="button" onclick="removeIpFromBlacklist()"
+                                    class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                从黑名单移除
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
-                        <input type="password" id="newPassword" required
-                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
+                    <div class="overflow-x-auto mb-8">
+                        <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
+                            <!-- Blacklisted IPs will be loaded here -->
+                            <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
+                        </ul>
                     </div>
-                    <div>
-                        <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
-                        <input type="password" id="confirmNewPassword" required
-                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                    <div class="flex justify-center">
-                        <button type="button" onclick="changeAdminPassword()"
-                                class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
-                                       hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                       transition duration-150 ease-in-out">
-                            修改密码
-                        </button>
+
+                    <!-- Change Password Sub-section -->
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4 mt-8">修改管理员密码</h3>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto">
+                        <div>
+                            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                            <input type="password" id="currentPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                            <input type="password" id="newPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                            <input type="password" id="confirmNewPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center">
+                            <button type="button" onclick="changeAdminPassword()"
+                                    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                修改密码
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -374,7 +403,43 @@
                     rejectCommentPromise(new Error('Comment input cancelled.'));
                 }
             };
+
+            // Add event listeners for sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    showSection(sectionId);
+                });
+            });
         });
+
+        /**
+         * Shows a specific content section and hides others.
+         * Also updates the active state of sidebar navigation items.
+         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
+         */
+        function showSection(sectionId) {
+            // Hide all content sections
+            document.querySelectorAll('#adminPanel > div:not(nav)').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show the selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Update active class in sidebar
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`).classList.add('active');
+
+            // Load data specific to the section if needed
+            if (sectionId === 'questionsSection') {
+                loadQuestions();
+            } else if (sectionId === 'adminToolsSection') {
+                loadBlacklistedIps(); // Load IPs when admin tools section is shown
+            }
+        }
 
         /**
          * Handles the admin login process by sending credentials to the backend.
@@ -407,10 +472,9 @@
                     showMessageBox('登录成功！');
                     document.getElementById('loginForm').classList.add('hidden'); // Hide login form
                     document.getElementById('adminPanel').classList.remove('hidden'); // Show admin panel
-                    loadQuestions(); // Load questions after successful login
-                    loadBlacklistedIps(); // Load blacklisted IPs after login
+                    showSection('questionsSection'); // Show questions section by default after login
                 } else {
-                    showMessageBox(data.message || '登录失败，请检查邮箱和密码！');
+                    showMessageBox(data.message || '登录失败，请检查邮箱和密码   ');
                 }
             } catch (error) {
                 console.error('Login error:', error);
@@ -512,7 +576,7 @@
                         return Promise.reject('Unauthorized'); // Stop further processing
                     }
                     if (response.status === 0) {
-                        throw new Error('网络请  被阻止或无响应。请检查 CORS 配置。');
+                        throw new Error('网络请求被阻止或无响应。请检查 CORS 配置。');
                     }
                     return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
                 }
@@ -634,7 +698,7 @@
                 } else {
                     const noQuestionsRow = document.createElement('tr');
                     const noQuestionsCell = document.createElement('td');
-                    noQuestionsCell.setAttribute('colspan', '8'); // Adjusted colspan for the new '提交者IP' column
+                    noQuestionsCell.setAttribute('colspan', '8'); // Adjusted colspan for the new '提  者IP' column
                     noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
                     noQuestionsCell.textContent = '暂无题目。';
                     noQuestionsRow.appendChild(noQuestionsCell);
@@ -748,7 +812,7 @@
                     showMessageBox('数据包下载成功！');
                 })
                 .catch(error => {
-                    console.error('Error downloading data package:', error);
+                    console.error('Error downloading data package:', error); // Log the full error object
                     showMessageBox('下载数据包失败。错误详情: ' + (error.message || error));
                 });
         }
@@ -955,6 +1019,6 @@
             }
         }
     </script>
-<script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
 </body>
 </html>
