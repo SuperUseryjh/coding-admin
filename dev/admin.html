@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Coding组题目审核后台 | C++ Coding组</title>
+    <link rel="icon" href="https://mr-onion-blog.fun/img/avatar.png" type="image/png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for the message box */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-align: center;
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+        /* New styles for comment input modal */
+        .comment-input-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1001; /* Higher than message-box */
+            display: none; /* Hidden by default */
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        .comment-input-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            z-index: 1000;
+            display: none; /* Hidden by default */
+        }
+        /* Custom table styles to override default Tailwind for specific needs */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.25rem; /* Equivalent to mt-5 */
+        }
+        th, td {
+            padding: 0.75rem; /* Equivalent to p-3 */
+            border: 1px solid #e5e7eb; /* Equivalent to border-gray-300 */
+            text-align: left;
+        }
+        th {
+            background-color: #f9fafb; /* Equivalent to bg-gray-50 */
+        }
+        /* Sidebar navigation styles */
+        .sidebar-nav-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        .sidebar-nav-item:hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+        .sidebar-nav-item.active {
+            background-color: #d1d5db; /* gray-300 */
+            font-weight: 600;
+            color: #1f2937; /* gray-900 */
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
+    <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组题目审核后台</h1>
+        <p class="text-center text-gray-600 mb-8">管理员可   在这里审核提交的题目。</p>
+
+        <!-- 管理员登录表单 -->
+        <h2 id="loginTitle" class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员登录</h2>
+        <form id="loginForm" class="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm flex flex-col gap-4 max-w-md mx-auto">
+            <div>
+                <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-1">管理员邮箱</label>
+                <input type="email" id="adminEmail" name="adminEmail" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">管理员密码</label>
+                <input type="password" id="adminPassword" name="adminPassword" required
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <button type="button" onclick="loginAdmin()"
+                    class="mt-4 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           transition duration-150 ease-in-out">
+                登录
+            </button>
+        </form>
+
+        <!-- 管理员面板 - 包含侧边栏和内容区域 -->
+        <div id="adminPanel" class="hidden flex flex-col md:flex-row gap-8">
+            <!-- 左侧导航栏 -->
+            <nav class="w-full md:w-1/4 bg-gray-50 p-4 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">导航</h3>
+                <ul>
+                    <li class="sidebar-nav-item active" data-section="questionsSection">题目列表</li>
+                    <li class="sidebar-nav-item" data-section="adminToolsSection">管理员工具</li>
+                </ul>
+            </nav>
+
+            <!-- 右侧内容区域 -->
+            <div class="w-full md:w-3/4 bg-white p-0 rounded-lg shadow-none">
+                <!-- 题目列表部分 -->
+                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <select id="statusFilter" onchange="loadQuestions()"
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="pending">待审核</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="all">所有题目</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionsTable" class="divide-y divide-gray-200">
+                                <!-- 数据将通过AJAX动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 管理员工具部分 -->
+                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
+
+                    <!-- IP Blacklist Management Sub-section -->
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">IP 黑名单管理</h3>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
+                        <div>
+                            <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
+                            <input type="text" id="ipInput" placeholder="例如: 192.168.1.1"
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center space-x-4">
+                            <button type="button" onclick="addIpToBlacklist()"
+                                    class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                加入黑名单
+                            </button>
+                            <button type="button" onclick="removeIpFromBlacklist()"
+                                    class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                从黑名单移除
+                            </button>
+                        </div>
+                    </div>
+
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
+                    <div class="overflow-x-auto mb-8">
+                        <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
+                            <!-- Blacklisted IPs will be loaded here -->
+                            <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
+                        </ul>
+                    </div>
+
+                    <!-- Change Password Sub-section -->
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4 mt-8">修改管理员密码</h3>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto">
+                        <div>
+                            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                            <input type="password" id="currentPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                            <input type="password" id="newPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                            <input type="password" id="confirmNewPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center">
+                            <button type="button" onclick="changeAdminPassword()"
+                                    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                修改密码
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box Overlay -->
+    <div id="messageBoxOverlay" class="message-box-overlay"></div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageBoxContent" class="text-lg font-medium text-gray-800 mb-4"></p>
+        <button onclick="closeMessageBox()"
+                class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                       hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                       transition duration-150 ease-in-out">
+            确定
+        </button>
+    </div>
+
+    <!-- New Comment Input Modal Structure -->
+    <div id="commentInputOverlay" class="comment-input-overlay"></div>
+    <div id="commentInputModal" class="comment-input-modal">
+        <h3 id="commentModalTitle" class="text-xl font-semibold text-gray-800 mb-4"></h3>
+        <textarea id="commentInput" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:ring-blue-500 focus:border-blue-500" rows="4" placeholder="请输入意见（可选）..."></textarea>
+        <div class="flex justify-center space-x-4">
+            <button id="confirmCommentBtn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">确认</button>
+            <button id="cancelCommentBtn" class="px-6 py-2 bg-gray-400 text-white font-semibold rounded-md shadow-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-150 ease-in-out">取消</button>
+        </div>
+    </div>
+
+    <!-- Developer Info Footer -->
+    <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
+        <div class="container mx-auto">
+            <p>开发者信息：Mr_Onion</p>
+            <p>联系邮箱：<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aacbcec7c3c4eac7d887c5c4c3c5c487c8c6c5cd84ccdfc4">[email&#160;protected]</a></p>
+            <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
+            <p class="mt-2">&copy; 2025 C++ Coding组题目审核后台. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // IMPORTANT: Replace this with the actual base URL of your Cloudflare Worker.
+        // Example: const WORKER_BASE_URL = "https://your-worker-name.your-username.workers.dev";
+        const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+
+        /**
+         * Calculates the SHA-256 hash of a given string.
+         * @param {string} message - The string to hash.
+         * @returns {Promise<string>} A promise that resolves with the SHA-256 hash in hexadecimal format.
+         */
+        async function sha256(message) {
+            const textEncoder = new TextEncoder();
+            const data = textEncoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const byteArray = Array.from(new Uint8Array(hashBuffer));
+            const hexHash = byteArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hexHash;
+        }
+
+        /**
+         * Maps English status values to Chinese equivalents.
+         * @param {string} status - The English status string.
+         * @returns {string} The corresponding Chinese status string.
+         */
+        function getChineseStatus(status) {
+            switch (status) {
+                case 'pending':
+                    return '待审核';
+                case 'approved':
+                    return '已通过';
+                case 'rejected':
+                    return '已拒绝';
+                default:
+                    return '未知状态';
+            }
+        }
+
+        /**
+         * Maps English difficulty values to Chinese equivalents.
+         * @param {string} difficulty - The English difficulty string.
+         * @returns {string} The corresponding Chinese difficulty string.
+         */
+        function getChineseDifficulty(difficulty) {
+            switch (difficulty) {
+                case 'easy':
+                    return '入门';
+                case 'medium':
+                    return '普及-';
+                case 'hard':
+                    return '普及/提高-';
+                case 'qwe':
+                    return '普及+/提高';
+                case 'df':
+                    return '提高+/省选-';
+                case 'noi':
+                    return '省选/NOI-';
+                case 'ctsc':
+                    return 'NOI/NOI+CTSC';
+                default:
+                    return '未知难度';
+            }
+        }
+
+        /**
+         * Displays a custom message box instead of the browser's alert.
+         * @param {string} message - The message to display.
+         */
+        function showMessageBox(message) {
+            document.getElementById('messageBoxContent').textContent = message;
+            document.getElementById('messageBoxOverlay').style.display = 'block';
+            document.getElementById('messageBox').style.display = 'block';
+        }
+
+        /**
+         * Hides the custom message box.
+         */
+        function closeMessageBox() {
+            document.getElementById('messageBoxOverlay').style.display = 'none';
+            document.getElementById('messageBox').style.display = 'none';
+        }
+
+        // Promise resolver/rejecter for the comment input modal
+        let resolveCommentPromise;
+        let rejectCommentPromise;
+
+        /**
+         * Shows a modal for inputting comments.
+         * @param {string} title - The title for the comment modal.
+         * @returns {Promise<string>} A promise that resolves with the comment string or rejects if cancelled.
+         */
+        function showCommentInputModal(title) {
+            document.getElementById('commentModalTitle').textContent = title;
+            document.getElementById('commentInput').value = ''; // Clear previous input
+            document.getElementById('commentInputOverlay').style.display = 'block';
+            document.getElementById('commentInputModal').style.display = 'block';
+
+            return new Promise((resolve, reject) => {
+                resolveCommentPromise = resolve;
+                rejectCommentPromise = reject;
+            });
+        }
+
+        /**
+         * Hides the comment input modal.
+         */
+        function hideCommentInputModal() {
+            document.getElementById('commentInputOverlay').style.display = 'none';
+            document.getElementById('commentInputModal').style.display = 'none';
+        }
+
+        // Event listeners for comment input modal buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('confirmCommentBtn').onclick = () => {
+                const comment = document.getElementById('commentInput').value;
+                hideCommentInputModal();
+                if (resolveCommentPromise) {
+                    resolveCommentPromise(comment);
+                }
+            };
+
+            document.getElementById('cancelCommentBtn').onclick = () => {
+                hideCommentInputModal();
+                if (rejectCommentPromise) {
+                    rejectCommentPromise(new Error('Comment input cancelled.'));
+                }
+            };
+
+            // Add event listeners for sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    showSection(sectionId);
+                });
+            });
+        });
+
+        /**
+         * Shows a specific content section and hides others.
+         * Also updates the active state of sidebar navigation items.
+         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
+         */
+        function showSection(sectionId) {
+            // Hide all content sections
+            // 隐藏所有内容部分
+            document.getElementById('questionsSection').classList.add('hidden');
+            document.getElementById('adminToolsSection').classList.add('hidden');
+
+            // Show the selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Update active class in sidebar
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`).classList.add('active');
+
+            // Load data specific to the section if needed
+            if (sectionId === 'questionsSection') {
+                loadQuestions();
+            } else if (sectionId === 'adminToolsSection') {
+                loadBlacklistedIps(); // Load IPs when admin tools section is shown
+            }
+        }
+
+        /**
+         * Handles the admin login process by sending credentials to the backend.
+         */
+        async function loginAdmin() {
+            const adminEmail = document.getElementById('adminEmail').value.trim();
+            const adminPassword = document.getElementById('adminPassword').value.trim();
+
+            if (!adminEmail || !adminPassword) {
+                showMessageBox('请输入管理员邮箱和密码。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/login`;
+            console.log('Attempting login to:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: adminEmail, password: adminPassword }),
+                    credentials: 'include' // Crucial for sending and receiving cookies
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMessageBox('登录成功！');
+                    document.getElementById('loginForm').classList.add('hidden'); // Hide login form
+                    document.getElementById('loginTitle').classList.add('hidden'); // Hide login title
+                    document.getElementById('adminPanel').classList.remove('hidden'); // Show admin panel
+                    showSection('questionsSection'); // Show questions section by default after login
+                } else {
+                    showMessageBox(data.message || '登录失败，请检查邮箱和密码   ');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessageBox('登录过程中发生错误。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Handles changing the admin password.
+         */
+        async function changeAdminPassword() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
+
+            if (!currentPassword || !newPassword || !confirmNewPassword) {
+                showMessageBox('所有密码字段都不能为空。');
+                return;
+            }
+
+            if (newPassword !== confirmNewPassword) {
+                showMessageBox('新密码和确认密码不匹配。');
+                return;
+            }
+
+            if (newPassword.length < 6) { // Example: enforce minimum password length
+                showMessageBox('新密码长度不能少于6位。');
+                return;
+            }
+
+            // Hash passwords before sending to backend
+            const hashedCurrentPassword = await sha256(currentPassword);
+            const hashedNewPassword = await sha256(newPassword);
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/change-password`;
+            console.log('Attempting to change password at:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword: hashedCurrentPassword,
+                        newPassword: hashedNewPassword
+                    }),
+                    credentials: 'include' // Crucial for sending cookies with this request
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMessageBox(data.message);
+                    // Clear password fields on success
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmNewPassword').value = '';
+                } else {
+                    showMessageBox(data.message || '修改密码失败。');
+                }
+            } catch (error) {
+                console.error('Change password error:', error);
+                showMessageBox('修改密码过程中发生错误。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Loads questions from the backend based on the selected status filter and populates the table.
+         * Calls the Cloudflare Worker to get questions.
+         */
+        function loadQuestions() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const statusFilter = document.getElementById('statusFilter').value;
+            const fetchURL = `${WORKER_BASE_URL}/admin/questions?status=${statusFilter}`;
+            console.log('Fetching questions from:', fetchURL);
+
+            fetch(fetchURL, {
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // If not authenticated (e.g., 401), redirect to login or show specific message
+                    if (response.status === 401) {
+                        showMessageBox('会话已过期或未登录。请重新登录。');
+                        document.getElementById('adminPanel').classList.add('hidden');
+                        document.getElementById('loginForm').classList.remove('hidden');
+                        return Promise.reject('Unauthorized'); // Stop further processing
+                    }
+                    if (response.status === 0) {
+                        throw new Error('网络请求被阻止或无响应。请检查 CORS 配置。');
+                    }
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                const questionsTable = document.getElementById('questionsTable');
+                questionsTable.innerHTML = ''; // Clear table content
+
+                if (data.questions && data.questions.length > 0) {
+                    data.questions.forEach(question => {
+                        const row = document.createElement('tr');
+                        row.classList.add('hover:bg-gray-50');
+
+                        const titleCell = document.createElement('td');
+                        titleCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
+                        titleCell.textContent = question.questionTitle;
+                        row.appendChild(titleCell);
+
+                        const authorCell = document.createElement('td');
+                        authorCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        authorCell.textContent = question.questionAuthor;
+                        row.appendChild(authorCell);
+
+                        const difficultyCell = document.createElement('td');
+                        difficultyCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        difficultyCell.textContent = getChineseDifficulty(question.questionDifficulty);
+                        row.appendChild(difficultyCell);
+
+                        const statusCell = document.createElement('td');
+                        statusCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        statusCell.textContent = getChineseStatus(question.status);
+                        row.appendChild(statusCell);
+
+                        const commentCell = document.createElement('td');
+                        commentCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        commentCell.textContent = question.comment || '无';
+                        row.appendChild(commentCell);
+
+                        // New: Submission Date Cell
+                        const submissionDateCell = document.createElement('td');
+                        submissionDateCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        if (question.submissionDate) {
+                            const date = new Date(question.submissionDate);
+                            submissionDateCell.textContent = date.toLocaleString();
+                        } else {
+                            submissionDateCell.textContent = '未知';
+                        }
+                        row.appendChild(submissionDateCell);
+
+                        // New: Submitter IP Cell
+                        const submitterIpCell = document.createElement('td');
+                        submitterIpCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        submitterIpCell.textContent = question.submitterIp || '未知'; // Display IP, or '未知' if not present
+                        row.appendChild(submitterIpCell);
+
+                        const actionCell = document.createElement('td');
+                        actionCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
+
+                        // Download Description Button
+                        const downloadDescButton = document.createElement('button');
+                        downloadDescButton.textContent = '下载描述';
+                        downloadDescButton.onclick = () => downloadDescription(question._id, question.questionTitle);
+                        downloadDescButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-purple-600',
+                                                        'hover:bg-purple-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-purple-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
+                        actionCell.appendChild(downloadDescButton);
+
+                        // Download Data Package Button
+                        const downloadDataButton = document.createElement('button');
+                        downloadDataButton.textContent = '下载数据包';
+                        downloadDataButton.onclick = () => downloadDataPackage(question._id, question.questionTitle);
+                        downloadDataButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-indigo-600',
+                                                        'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-indigo-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
+                        actionCell.appendChild(downloadDataButton);
+
+
+                        if (question.status === 'pending') { // Only show approve/reject for pending questions
+                            const approveButton = document.createElement('button');
+                            approveButton.textContent = '通过';
+                            approveButton.onclick = async () => {
+                                try {
+                                    const comment = await showCommentInputModal('请输入通过意见');
+                                    approveQuestion(question._id, comment);
+                                } catch (error) {
+                                    console.log(error.message);
+                                }
+                            };
+                            approveButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-green-600',
+                                                        'hover:bg-green-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-green-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
+                            actionCell.appendChild(approveButton);
+
+                            const rejectButton = document.createElement('button');
+                            rejectButton.textContent = '拒绝';
+                            rejectButton.onclick = async () => {
+                                try {
+                                    const comment = await showCommentInputModal('请输入拒绝意见');
+                                    rejectQuestion(question._id, comment);
+                                } catch (error) {
+                                    console.log(error.message);
+                                }
+                            };
+                            rejectButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-red-600',
+                                                        'hover:bg-red-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-red-500', 'transition', 'duration-150', 'ease-in-out', 'mb-1');
+                            actionCell.appendChild(rejectButton);
+                        }
+
+
+                        row.appendChild(actionCell);
+                        questionsTable.appendChild(row);
+                    });
+                } else {
+                    const noQuestionsRow = document.createElement('tr');
+                    const noQuestionsCell = document.createElement('td');
+                    noQuestionsCell.setAttribute('colspan', '8'); // Adjusted colspan for the new '提  者IP' column
+                    noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
+                    noQuestionsCell.textContent = '暂无题目。';
+                    noQuestionsRow.appendChild(noQuestionsCell);
+                    questionsTable.appendChild(noQuestionsRow);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // If unauthorized, show login form
+                if (error.message === 'Unauthorized') {
+                    showMessageBox('会话已过期或未登录。请重新登录。');
+                    document.getElementById('adminPanel').classList.add('hidden');
+                    document.getElementById('loginForm').classList.remove('hidden');
+                } else {
+                    showMessageBox('加载题目列表失败。请检查您的 Cloudflare Worker 是否已部署且 URL 正确。错误详情: ' + error.message);
+                }
+            });
+        }
+
+        /**
+         * Downloads the question description as a markdown file.
+         * Assumes the backend provides a /admin/download/description/:id endpoint
+         * that returns the raw markdown content.
+         * @param {string} questionId - The ID of the question.
+         * @param {string} title - The title of the question, used for filename.
+         */
+        function downloadDescription(questionId, title) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/download/description/${questionId}`;
+            console.log('Downloading description from:', fetchURL);
+
+            fetch(fetchURL, {
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            showMessageBox('会话已过期或未登录。请重新登录。');
+                            document.getElementById('adminPanel').classList.add('hidden');
+                            document.getElementById('loginForm').classList.remove('hidden');
+                            return Promise.reject('Unauthorized');
+                        }
+                        // If it's not a 401, but still an error status, try to parse JSON for message
+                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.text(); // Get raw text for markdown
+                })
+                .then(markdownContent => {
+                    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${title}.md`; // Use question title for filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url); // Clean up
+                    showMessageBox('题目描述下载成功！');
+                })
+                .catch(error => {
+                    console.error('Error downloading description:', error); // Log the full error object
+                    showMessageBox('下载题目描述失败。错误详情: ' + (error.message || error));
+                });
+        }
+
+        /**
+         * Downloads the data package as a zip file.
+         * Assumes the backend provides a /admin/download/data/:id endpoint
+         * that returns the raw zip file content.
+         * @param {string} questionId - The ID of the question.
+         * @param {string} title - The title of the question, used for filename.
+         */
+        function downloadDataPackage(questionId, title) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/download/data/${questionId}`;
+            console.log('Downloading data package from:', fetchURL);
+
+            fetch(fetchURL, {
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            showMessageBox('会话已过期或未登录。请重新登录。');
+                            document.getElementById('adminPanel').classList.add('hidden');
+                            document.getElementById('loginForm').classList.remove('hidden');
+                            return Promise.reject('Unauthorized');
+                        }
+                        // If it's not a 401, but still an error status, try to parse JSON for message
+                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.blob(); // Get as Blob for binary data
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${title}_data.zip`; // Use question title for filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url); // Clean up
+                    showMessageBox('数据包下载成功！');
+                })
+                .catch(error => {
+                    console.error('Error downloading data package:', error); // Log the full error object
+                    showMessageBox('下载数据包失败。错误详情: ' + (error.message || error));
+                });
+        }
+
+        /**
+         * Approves a question by sending a POST request to the backend.
+         * Calls the Cloudflare Worker to approve a question.
+         * @param {string} questionId - The ID of the question to approve.
+         * @param {string} comment - The comment for the approval.
+         */
+        function approveQuestion(questionId, comment) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/approve/${questionId}`;
+            console.log('Approving question at:', fetchURL, 'with comment:', comment);
+            fetch(fetchURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comment: comment }),
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessageBox('会话已过期或未登录。请重新登录。');
+                        document.getElementById('adminPanel').classList.add('hidden');
+                        document.getElementById('loginForm').classList.remove('hidden');
+                        return Promise.reject('Unauthorized');
+                    }
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessageBox(data.message);
+                loadQuestions();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessageBox('通过审核失败。错误详情: ' + error.message);
+            });
+        }
+
+        /**
+         * Rejects a question by sending a POST request to the backend.
+         * Calls the Cloudflare Worker to reject a question.
+         * @param {string} questionId - The ID of the question to reject.
+         * @param {string} comment - The comment for the rejection.
+         */
+        function rejectQuestion(questionId, comment) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/reject/${questionId}`;
+            console.log('Rejecting question at:', fetchURL, 'with comment:', comment);
+            fetch(fetchURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comment: comment }),
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessageBox('会话已过期或未登录。请重新登录。');
+                        document.getElementById('adminPanel').classList.add('hidden');
+                        document.getElementById('loginForm').classList.remove('hidden');
+                        return Promise.reject('Unauthorized');
+                    }
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessageBox(data.message);
+                loadQuestions();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessageBox('拒绝审核失败。错误详情: ' + error.message);
+            });
+        }
+
+        /**
+         * Adds an IP address to the blacklist.
+         */
+        async function addIpToBlacklist() {
+            const ip = document.getElementById('ipInput').value.trim();
+            if (!ip) {
+                showMessageBox('请输入要加入黑名单的IP地址。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ip`;
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip }),
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    document.getElementById('ipInput').value = ''; // Clear input
+                    loadBlacklistedIps(); // Refresh the list
+                } else {
+                    showMessageBox(data.message || '加入黑名单失败。');
+                }
+            } catch (error) {
+                console.error('Error adding IP to blacklist:', error);
+                showMessageBox('加入黑名单失败。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Removes an IP address from the blacklist.
+         */
+        async function removeIpFromBlacklist() {
+            const ip = document.getElementById('ipInput').value.trim();
+            if (!ip) {
+                showMessageBox('请输入要从黑名单移除的IP地址。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/unblacklist-ip`;
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip }),
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    document.getElementById('ipInput').value = ''; // Clear input
+                    loadBlacklistedIps(); // Refresh the list
+                } else {
+                    showMessageBox(data.message || '从黑名单移除失败。');
+                }
+            } catch (error) {
+                console.error('Error removing IP from blacklist:', error);
+                showMessageBox('从黑名单移除失败。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Loads the list of blacklisted IPs from the backend and displays them.
+         */
+        async function loadBlacklistedIps() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                console.error('WORKER_BASE_URL is not set for blacklist functions.');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ips`;
+            try {
+                const response = await fetch(fetchURL, {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // If not authorized, don't show an error, just don't load the list
+                        console.warn('Not authorized to load blacklisted IPs. Session might have expired.');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const blacklistedIpsList = document.getElementById('blacklistedIpsList');
+                blacklistedIpsList.innerHTML = ''; // Clear current list
+
+                if (data.ips && data.ips.length > 0) {
+                    data.ips.forEach(ip => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('py-2', 'px-4', 'flex', 'justify-between', 'items-center');
+                        listItem.textContent = ip;
+
+                        const removeButton = document.createElement('button');
+                        removeButton.textContent = '移除';
+                        removeButton.classList.add('ml-4', 'px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'focus:outline-none');
+                        removeButton.onclick = async () => {
+                            document.getElementById('ipInput').value = ip; // Populate input for easy removal
+                            await removeIpFromBlacklist();
+                        };
+                        listItem.appendChild(removeButton);
+                        blacklistedIpsList.appendChild(listItem);
+                    });
+                } else {
+                    const noIpItem = document.createElement('li');
+                    noIpItem.classList.add('py-2', 'text-center', 'text-gray-500');
+                    noIpItem.textContent = '暂无黑名单IP。';
+                    blacklistedIpsList.appendChild(noIpItem);
+                }
+            } catch (error) {
+                console.error('Error loading blacklisted IPs:', error);
+                showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
+            }
+        }
+    </script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
+</body>
+</html>
