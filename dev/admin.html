@@ -135,7 +135,8 @@
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">导航</h3>
                 <ul>
                     <li class="sidebar-nav-item active" data-section="questionsSection">题目列表</li>
-                    <li class="sidebar-nav-item" data-section="adminToolsSection">管理员工具</li>
+                    <li class="sidebar-nav-item" data-section="ipBlacklistSection">IP 黑名单管理</li>
+                    <li class="sidebar-nav-item" data-section="changePasswordSection">修改管理员密码</li>
                 </ul>
             </nav>
 
@@ -174,12 +175,9 @@
                     </div>
                 </div>
 
-                <!-- 管理员工具部分 -->
-                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
-                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
-
-                    <!-- IP Blacklist Management Sub-section -->
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4">IP 黑名单管理</h3>
+                <!-- IP 黑名单管理部分 -->
+                <div id="ipBlacklistSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">IP 黑名单管理</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
                         <div>
                             <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
@@ -201,7 +199,6 @@
                             </button>
                         </div>
                     </div>
-
                     <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
                     <div class="overflow-x-auto mb-8">
                         <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
@@ -209,9 +206,11 @@
                             <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
                         </ul>
                     </div>
+                </div>
 
-                    <!-- Change Password Sub-section -->
-                    <h3 class="text-xl font-semibold text-gray-700 mb-4 mt-8">修改管理员密码</h3>
+                <!-- 修改管理员密码部分 -->
+                <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto">
                         <div>
                             <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
@@ -237,6 +236,12 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- 管理员工具部分 (保留但无内容) -->
+                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
+                    <p class="text-center text-gray-500">请从左侧导航选择具体工具。</p>
                 </div>
             </div>
         </div>
@@ -422,7 +427,9 @@
             // Hide all content sections
             // 隐藏所有内容部分
             document.getElementById('questionsSection').classList.add('hidden');
-            document.getElementById('adminToolsSection').classList.add('hidden');
+            document.getElementById('ipBlacklistSection').classList.add('hidden');
+            document.getElementById('changePasswordSection').classList.add('hidden');
+            document.getElementById('adminToolsSection').classList.add('hidden'); // Keep this hidden as it's now just a placeholder
 
             // Show the selected section
             document.getElementById(sectionId).classList.remove('hidden');
@@ -436,8 +443,10 @@
             // Load data specific to the section if needed
             if (sectionId === 'questionsSection') {
                 loadQuestions();
-            } else if (sectionId === 'adminToolsSection') {
-                loadBlacklistedIps(); // Load IPs when admin tools section is shown
+            } else if (sectionId === 'ipBlacklistSection') {
+                loadBlacklistedIps(); // Load IPs when IP Blacklist section is shown
+            } else if (sectionId === 'changePasswordSection') {
+                // No specific data to load for change password section, just show the form
             }
         }
 
@@ -810,7 +819,7 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url); // Clean up
-                    showMessageBox('数据包下载成功！');
+                    showMessageBox('数据包下载成  ！');
                 })
                 .catch(error => {
                     console.error('Error downloading data package:', error); // Log the full error object
