@@ -461,9 +461,11 @@
                         // Toggle visibility of the sub-menu
                         subMenu.classList.toggle('hidden');
 
+                        // Manage active class for the parent item
+                        this.classList.toggle('active', !subMenu.classList.contains('hidden'));
+
                         // If the sub-menu is now visible, automatically show the first sub-section
                         if (!subMenu.classList.contains('hidden')) {
-                            // Find the first sub-item and trigger its click
                             const firstSubItem = subMenu.querySelector('.sidebar-nav-item');
                             if (firstSubItem) {
                                 showSection(firstSubItem.dataset.section);
@@ -473,8 +475,6 @@
                             document.getElementById('ipBlacklistSection').classList.add('hidden');
                             document.getElementById('changePasswordSection').classList.add('hidden');
                             document.getElementById('adminToolsSection').classList.add('hidden'); // Hide the parent content area too
-                            // Remove active class from parent when collapsing
-                            this.classList.remove('active');
                         }
                     } else {
                         // For regular sidebar items (including sub-items)
