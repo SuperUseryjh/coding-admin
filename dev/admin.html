@@ -451,10 +451,35 @@
             };
 
             // Add event listeners for sidebar navigation
-            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
+            document.querySelectorAll('.sidebar-nav-item, .sidebar-nav-parent').forEach(item => {
+                item.addEventListener('click', function(event) {
                     const sectionId = this.dataset.section;
-                    showSection(sectionId);
+                    const isParent = this.classList.contains('sidebar-nav-parent');
+
+                    if (isParent) {
+                        const subMenu = this.querySelector('.sidebar-sub-menu');
+                        // Toggle visibility of the sub-menu
+                        subMenu.classList.toggle('hidden');
+
+                        // If the sub-menu is now visible, automatically show the first sub-section
+                        if (!subMenu.classList.contains('hidden')) {
+                            // Find the first sub-item and trigger its click
+                            const firstSubItem = subMenu.querySelector('.sidebar-nav-item');
+                            if (firstSubItem) {
+                                showSection(firstSubItem.dataset.section);
+                            }
+                        } else {
+                            // If sub-menu is hidden, hide all sub-sections within admin tools
+                            document.getElementById('ipBlacklistSection').classList.add('hidden');
+                            document.getElementById('changePasswordSection').classList.add('hidden');
+                            document.getElementById('adminToolsSection').classList.add('hidden'); // Hide the parent content area too
+                            // Remove active class from parent when collapsing
+                            this.classList.remove('active');
+                        }
+                    } else {
+                        // For regular sidebar items (including sub-items)
+                        showSection(sectionId);
+                    }
                 });
             });
         });
@@ -462,7 +487,7 @@
         /**
          * Shows a specific content section and hides others.
          * Also updates the active state of sidebar navigation items.
-         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
+         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'ipBlacklistSection').
          */
         function showSection(sectionId) {
             // Hide all main content sections
@@ -478,33 +503,26 @@
                 item.classList.remove('active');
             });
 
-            // Handle parent navigation item click (e.g., "管理员工具")
-            if (sectionId === 'adminToolsParent') {
-                const parentItem = document.querySelector(`.sidebar-nav-parent[data-section="${sectionId}"]`);
-                const subMenu = parentItem.querySelector('.sidebar-sub-menu');
-                
-                // Toggle visibility of the sub-menu
-                subMenu.classList.toggle('hidden');
-                
-                // Add active class to the parent item
-                parentItem.classList.add('active');
+            // Show the selected content section
+            document.getElementById(sectionId).classList.remove('hidden');
 
-                // Show the main admin tools content area if it's not already visible
-                document.getElementById('adminToolsSection').classList.remove('hidden');
-
-            } else {
-                // Handle regular navigation item click (e.g., "题目列表", or sub-items like "IP 黑名单管理")
-                const selectedItem = document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`);
+            // Set active class for the selected item
+            const selectedItem = document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`);
+            if (selectedItem) {
                 selectedItem.classList.add('active');
+            }
 
-                // Show the selected content section
-                document.getElementById(sectionId).classList.remove('hidden');
-
-                // If the selected section is a sub-section, ensure its parent content area is also visible
-                if (sectionId === 'ipBlacklistSection' || sectionId === 'changePasswordSection') {
-                    document.getElementById('adminToolsSection').classList.remove('hidden');
-                    // Also set the parent nav item as active
-                    document.querySelector('.sidebar-nav-parent[data-section="adminToolsParent"]').classList.add('active');
+            // If the selected section is a sub-section, ensure its parent content area is also visible
+            if (sectionId === 'ipBlacklistSection' || sectionId === 'changePasswordSection') {
+                document.getElementById('adminToolsSection').classList.remove('hidden');
+                // Also set the parent nav item as active and ensure its sub-menu is visible
+                const parentItem = document.querySelector('.sidebar-nav-parent[data-section="adminToolsParent"]');
+                if (parentItem) {
+                    parentItem.classList.add('active');
+                    const subMenu = parentItem.querySelector('.sidebar-sub-menu');
+                    if (subMenu && subMenu.classList.contains('hidden')) {
+                        subMenu.classList.remove('hidden');
+                    }
                 }
             }
 
