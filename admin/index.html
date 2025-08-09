@@ -420,9 +420,9 @@
          */
         function showSection(sectionId) {
             // Hide all content sections
-            document.querySelectorAll('#adminPanel > div:not(nav)').forEach(section => {
-                section.classList.add('hidden');
-            });
+            // 隐藏所有内容部分
+            document.getElementById('questionsSection').classList.add('hidden');
+            document.getElementById('adminToolsSection').classList.add('hidden');
 
             // Show the selected section
             document.getElementById(sectionId).classList.remove('hidden');
