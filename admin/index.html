@@ -471,6 +471,7 @@
                 if (response.ok && data.success) {
                     showMessageBox('登录成功！');
                     document.getElementById('loginForm').classList.add('hidden'); // Hide login form
+                    document.getElementById('loginTitle').classList.add('hidden'); // Hide login title
                     document.getElementById('adminPanel').classList.remove('hidden'); // Show admin panel
                     showSection('questionsSection'); // Show questions section by default after login
                 } else {
