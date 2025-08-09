@@ -98,43 +98,6 @@
             font-weight: 600;
             color: #1f2937; /* gray-900 */
         }
-        /* New styles for nested sidebar navigation */
-        .sidebar-nav-parent {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            border-radius: 0.375rem; /* rounded-md */
-            font-weight: 600; /* Make parent bold */
-            color: #1f2937; /* gray-900 */
-        }
-        .sidebar-nav-parent:hover {
-            background-color: #e5e7eb; /* gray-200 */
-        }
-        .sidebar-sub-menu {
-            padding-left: 1.5rem; /* Indent sub-menu items */
-            margin-top: 0.5rem;
-        }
-        .sidebar-sub-menu .sidebar-nav-item {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-            font-weight: normal; /* Reset font-weight for sub-items */
-        }
-        .sidebar-sub-menu .sidebar-nav-item.active {
-            background-color: #d1d5db; /* gray-300 */
-            font-weight: 600;
-            color: #1f2937; /* gray-900 */
-        }
-        /* Style for sub-sections within admin tools */
-        .sub-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-        }
-        .sub-section:first-child {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
     </style>
 </head>
 <body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
@@ -172,13 +135,8 @@
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">导航</h3>
                 <ul>
                     <li class="sidebar-nav-item active" data-section="questionsSection">题目列表</li>
-                    <li class="sidebar-nav-parent" data-section="adminToolsParent">
-                        管理员工具
-                        <ul class="sidebar-sub-menu hidden">
-                            <li class="sidebar-nav-item" data-section="ipBlacklistSection">IP 黑名单管理</li>
-                            <li class="sidebar-nav-item" data-section="changePasswordSection">修改管理员密码</li>
-                        </ul>
-                    </li>
+                    <li class="sidebar-nav-item" data-section="ipBlacklistSection">IP 黑名单管理</li>
+                    <li class="sidebar-nav-item" data-section="changePasswordSection">修改管理员密码</li>
                 </ul>
             </nav>
 
@@ -217,70 +175,98 @@
                     </div>
                 </div>
 
-                <!-- 管理员工具部分 (父级容器) -->
-                <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
-                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
+                <!-- 题目列表部分 -->
+                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <select id="statusFilter" onchange="loadQuestions()"
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="pending">待审核</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="all">所有题目</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionsTable" class="divide-y divide-gray-200">
+                                <!-- 数据将通过AJAX动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                    <!-- IP 黑名单管理部分 -->
-                    <div id="ipBlacklistSection" class="sub-section hidden">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4">IP 黑名单管理</h3>
-                        <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
-                            <div>
-                                <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
-                                <input type="text" id="ipInput" placeholder="例如: 192.168.1.1"
-                                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            </div>
-                            <div class="flex justify-center space-x-4">
-                                <button type="button" onclick="addIpToBlacklist()"
-                                        class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
-                                               hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
-                                               transition duration-150 ease-in-out">
-                                    加入黑名单
-                                </button>
-                                <button type="button" onclick="removeIpFromBlacklist()"
-                                        class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
-                                               hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
-                                               transition duration-150 ease-in-out">
-                                    从黑名单移除
-                                </button>
-                            </div>
+                <!-- IP 黑名单管理部分 -->
+                <div id="ipBlacklistSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">IP 黑名单管理</h2>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto mb-8">
+                        <div>
+                            <label for="ipInput" class="block text-sm font-medium text-gray-700 mb-1">IP 地址</label>
+                            <input type="text" id="ipInput" placeholder="例如: 192.168.1.1"
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
-                        <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
-                        <div class="overflow-x-auto mb-8">
-                            <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
-                                <!-- Blacklisted IPs will be loaded here -->
-                                <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
-                            </ul>
+                        <div class="flex justify-center space-x-4">
+                            <button type="button" onclick="addIpToBlacklist()"
+                                    class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                加入黑名单
+                            </button>
+                            <button type="button" onclick="removeIpFromBlacklist()"
+                                    class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                从黑名单移除
+                            </button>
                         </div>
                     </div>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">当前黑名单IP</h4>
+                    <div class="overflow-x-auto mb-8">
+                        <ul id="blacklistedIpsList" class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 max-w-md mx-auto divide-y divide-gray-100">
+                            <!-- Blacklisted IPs will be loaded here -->
+                            <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
+                        </ul>
+                    </div>
+                </div>
 
-                    <!-- 修改管理员密码部分 -->
-                    <div id="changePasswordSection" class="sub-section hidden">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4 mt-8">修改管理员密码</h3>
-                        <div class="flex flex-col gap-4 max-w-md mx-auto">
-                            <div>
-                                <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
-                                <input type="password" id="currentPassword" required
-                                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            </div>
-                            <div>
-                                <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
-                                <input type="password" id="newPassword" required
-                                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            </div>
-                            <div>
-                                <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
-                                <input type="password" id="confirmNewPassword" required
-                                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            </div>
-                            <div class="flex justify-center">
-                                <button type="button" onclick="changeAdminPassword()"
-                                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
-                                               hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                               transition duration-150 ease-in-out">
-                                    修改密码
-                                </button>
-                            </div>
+                <!-- 修改管理员密码部分 -->
+                <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto">
+                        <div>
+                            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                            <input type="password" id="currentPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                            <input type="password" id="newPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                            <input type="password" id="confirmNewPassword" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center">
+                            <button type="button" onclick="changeAdminPassword()"
+                                    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                修改密码
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -451,35 +437,10 @@
             };
 
             // Add event listeners for sidebar navigation
-            document.querySelectorAll('.sidebar-nav-item, .sidebar-nav-parent').forEach(item => {
-                item.addEventListener('click', function(event) {
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
                     const sectionId = this.dataset.section;
-                    const isParent = this.classList.contains('sidebar-nav-parent');
-
-                    if (isParent) {
-                        const subMenu = this.querySelector('.sidebar-sub-menu');
-                        // Toggle visibility of the sub-menu
-                        subMenu.classList.toggle('hidden');
-
-                        // Manage active class for the parent item
-                        this.classList.toggle('active', !subMenu.classList.contains('hidden'));
-
-                        // If the sub-menu is now visible, automatically show the first sub-section
-                        if (!subMenu.classList.contains('hidden')) {
-                            const firstSubItem = subMenu.querySelector('.sidebar-nav-item');
-                            if (firstSubItem) {
-                                showSection(firstSubItem.dataset.section);
-                            }
-                        } else {
-                            // If sub-menu is hidden, hide all sub-sections within admin tools
-                            document.getElementById('ipBlacklistSection').classList.add('hidden');
-                            document.getElementById('changePasswordSection').classList.add('hidden');
-                            document.getElementById('adminToolsSection').classList.add('hidden'); // Hide the parent content area too
-                        }
-                    } else {
-                        // For regular sidebar items (including sub-items)
-                        showSection(sectionId);
-                    }
+                    showSection(sectionId);
                 });
             });
         });
@@ -487,52 +448,33 @@
         /**
          * Shows a specific content section and hides others.
          * Also updates the active state of sidebar navigation items.
-         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'ipBlacklistSection').
+         * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
          */
         function showSection(sectionId) {
-            // Hide all main content sections
+            // Hide all content sections
+            // 隐藏所有内容部分
             document.getElementById('questionsSection').classList.add('hidden');
-            document.getElementById('adminToolsSection').classList.add('hidden');
-
-            // Hide all sub-sections within admin tools
             document.getElementById('ipBlacklistSection').classList.add('hidden');
             document.getElementById('changePasswordSection').classList.add('hidden');
+            document.getElementById('adminToolsSection').classList.add('hidden'); // Keep this hidden as it's now just a placeholder
 
-            // Remove active class from all sidebar items (main and sub-items)
-            document.querySelectorAll('.sidebar-nav-item, .sidebar-nav-parent').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Show the selected content section
+            // Show the selected section
             document.getElementById(sectionId).classList.remove('hidden');
 
-            // Set active class for the selected item
-            const selectedItem = document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`);
-            if (selectedItem) {
-                selectedItem.classList.add('active');
-            }
-
-            // If the selected section is a sub-section, ensure its parent content area is also visible
-            if (sectionId === 'ipBlacklistSection' || sectionId === 'changePasswordSection') {
-                document.getElementById('adminToolsSection').classList.remove('hidden');
-                // Also set the parent nav item as active and ensure its sub-menu is visible
-                const parentItem = document.querySelector('.sidebar-nav-parent[data-section="adminToolsParent"]');
-                if (parentItem) {
-                    parentItem.classList.add('active');
-                    const subMenu = parentItem.querySelector('.sidebar-sub-menu');
-                    if (subMenu && subMenu.classList.contains('hidden')) {
-                        subMenu.classList.remove('hidden');
-                    }
-                }
-            }
+            // Update active class in sidebar
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`).classList.add('active');
 
             // Load data specific to the section if needed
             if (sectionId === 'questionsSection') {
                 loadQuestions();
             } else if (sectionId === 'ipBlacklistSection') {
-                loadBlacklistedIps();
+                loadBlacklistedIps(); // Load IPs when IP Blacklist section is shown
+            } else if (sectionId === 'changePasswordSection') {
+                // No specific data to load for change password section, just show the form
             }
-            // No specific data loading needed for changePasswordSection
         }
 
         /**
