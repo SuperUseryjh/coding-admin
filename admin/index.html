@@ -140,7 +140,7 @@
                         </tr>
                     </thead>
                     <tbody id="questionsTable" class="divide-y divide-gray-200">
-                        <!-- 数据将通过AJAX动态加载 -->
+                        <!-- 数据将   过AJAX动态加载 -->
                     </tbody>
                 </table>
             </div>
@@ -175,6 +175,34 @@
                     <!-- Blacklisted IPs will be loaded here -->
                     <li class="py-2 text-center text-gray-500">暂无黑名单IP。</li>
                 </ul>
+            </div>
+
+            <!-- Change Password Section -->
+            <h2 class="text-2xl font-semibold text-center mb-6 mt-8 text-gray-700">修改管理员密码</h2>
+            <div class="p-6 border border-gray-200 rounded-lg shadow-sm flex flex-col gap-4 max-w-md mx-auto mb-8">
+                <div>
+                    <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">当前密码</label>
+                    <input type="password" id="currentPassword" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                    <input type="password" id="newPassword" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="confirmNewPassword" class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
+                    <input type="password" id="confirmNewPassword" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div class="flex justify-center">
+                    <button type="button" onclick="changeAdminPassword()"
+                            class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-md
+                                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                   transition duration-150 ease-in-out">
+                        修改密码
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -219,6 +247,20 @@
         // IMPORTANT: Replace this with the actual base URL of your Cloudflare Worker.
         // Example: const WORKER_BASE_URL = "https://your-worker-name.your-username.workers.dev";
         const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+
+        /**
+         * Calculates the SHA-256 hash of a given string.
+         * @param {string} message - The string to hash.
+         * @returns {Promise<string>} A promise that resolves with the SHA-256 hash in hexadecimal format.
+         */
+        async function sha256(message) {
+            const textEncoder = new TextEncoder();
+            const data = textEncoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const byteArray = Array.from(new Uint8Array(hashBuffer));
+            const hexHash = byteArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hexHash;
+        }
 
         /**
          * Maps English status values to Chinese equivalents.
@@ -368,6 +410,72 @@
             } catch (error) {
                 console.error('Login error:', error);
                 showMessageBox('登录过程中发生错误。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Handles changing the admin password.
+         */
+        async function changeAdminPassword() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value.trim();
+
+            if (!currentPassword || !newPassword || !confirmNewPassword) {
+                showMessageBox('所有密码字段都不能为空。');
+                return;
+            }
+
+            if (newPassword !== confirmNewPassword) {
+                showMessageBox('新密码和确认密码不匹配。');
+                return;
+            }
+
+            if (newPassword.length < 6) { // Example: enforce minimum password length
+                showMessageBox('新密码长度不能少于6位。');
+                return;
+            }
+
+            // Hash passwords before sending to backend
+            const hashedCurrentPassword = await sha256(currentPassword);
+            const hashedNewPassword = await sha256(newPassword);
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/change-password`;
+            console.log('Attempting to change password at:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword: hashedCurrentPassword,
+                        newPassword: hashedNewPassword
+                    }),
+                    credentials: 'include' // Crucial for sending cookies with this request
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMessageBox(data.message);
+                    // Clear password fields on success
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmNewPassword').value = '';
+                } else {
+                    showMessageBox(data.message || '修改密码失败。');
+                }
+            } catch (error) {
+                console.error('Change password error:', error);
+                showMessageBox('修改密码过程中发生错误。错误详情: ' + error.message);
             }
         }
 
@@ -635,7 +743,7 @@
                     showMessageBox('数据包下载成功！');
                 })
                 .catch(error => {
-                    console.error('Error downloading data package:', error); // Log the full error object
+                    console.error('Error downloading data package:', error);
                     showMessageBox('下载数据包失败。错误详情: ' + (error.message || error));
                 });
         }
