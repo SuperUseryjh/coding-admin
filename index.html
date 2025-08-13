@@ -169,17 +169,17 @@
             </form>
         </div>
 
-        <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">查询结果</h2>
+        <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">查询题目审核状态</h2>
         <div class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
             <form id="queryForm" class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <label for="queryEmail" class="text-sm font-medium text-gray-700">请输入您的邮箱</label>
-                <input type="email" id="queryEmail" name="queryEmail" required
+                <label for="queryQuestionId" class="text-sm font-medium text-gray-700">请输入题目ID</label>
+                <input type="text" id="queryQuestionId" name="queryQuestionId" required
                        class="flex-grow px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <button type="button" onclick="submitQuery()"
                         class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
                                hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
                                transition duration-150 ease-in-out">
-                    查询结果
+                    查询状态
                 </button>
             </form>
             <div id="queryResult" class="mt-6 p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-center hidden">
@@ -345,17 +345,17 @@
                 return;
             }
 
-            const email = document.getElementById('queryEmail').value.trim();
+            const questionId = document.getElementById('queryQuestionId').value.trim();
             const queryResultDiv = document.getElementById('queryResult');
             queryResultDiv.innerHTML = ''; // Clear previous results
             queryResultDiv.classList.add('hidden'); // Hide until results are ready
 
-            if (!email) {
-                showMessageBox('请输入您的邮箱进行查询。');
+            if (!questionId) {
+                showMessageBox('请输入题目ID进行查询。');
                 return;
             }
 
-            const fetchURL = `${WORKER_BASE_URL}/query?email=${encodeURIComponent(email)}`;
+            const fetchURL = `${WORKER_BASE_URL}/query?id=${encodeURIComponent(questionId)}`;
             console.log('Querying status from:', fetchURL); // 打印请求URL
 
             fetch(fetchURL)
@@ -366,7 +366,8 @@
                 return response.json();
             })
             .then(data => {
-                if (data.questions && data.questions.length > 0) {
+                if (data.question) {
+                    const q = data.question;
                     // Create table elements
                     const table = document.createElement('table');
                     const thead = document.createElement('thead');
@@ -384,40 +385,38 @@
                     table.appendChild(thead);
 
                     // Populate table body with question data
-                    data.questions.forEach(q => {
-                        const row = document.createElement('tr');
+                    const row = document.createElement('tr');
 
-                        const titleCell = document.createElement('td');
-                        titleCell.textContent = q.questionTitle || 'N/A';
-                        row.appendChild(titleCell);
+                    const titleCell = document.createElement('td');
+                    titleCell.textContent = q.questionTitle || 'N/A';
+                    row.appendChild(titleCell);
 
-                        const authorCell = document.createElement('td');
-                        authorCell.textContent = q.questionAuthor || 'N/A';
-                        row.appendChild(authorCell);
+                    const authorCell = document.createElement('td');
+                    authorCell.textContent = q.questionAuthor || 'N/A';
+                    row.appendChild(authorCell);
 
-                        const difficultyCell = document.createElement('td');
-                        difficultyCell.textContent = getChineseDifficulty(q.questionDifficulty); // Use Chinese difficulty
-                        row.appendChild(difficultyCell);
+                    const difficultyCell = document.createElement('td');
+                    difficultyCell.textContent = getChineseDifficulty(q.questionDifficulty); // Use Chinese difficulty
+                    row.appendChild(difficultyCell);
 
-                        const statusCell = document.createElement('td');
-                        statusCell.textContent = getChineseStatus(q.status); // Display the translated status
-                        row.appendChild(statusCell);
+                    const statusCell = document.createElement('td');
+                    statusCell.textContent = getChineseStatus(q.status); // Display the translated status
+                    row.appendChild(statusCell);
 
-                        const commentCell = document.createElement('td');
-                        commentCell.textContent = q.comment || '无';
-                        row.appendChild(commentCell);
+                    const commentCell = document.createElement('td');
+                    commentCell.textContent = q.comment || '无';
+                    row.appendChild(commentCell);
 
-                        const submissionDateCell = document.createElement('td');
-                        if (q.submissionDate) {
-                            const date = new Date(q.submissionDate);
-                            submissionDateCell.textContent = date.toLocaleString();
-                        } else {
-                            submissionDateCell.textContent = '未知';
-                        }
-                        row.appendChild(submissionDateCell);
+                    const submissionDateCell = document.createElement('td');
+                    if (q.submissionDate) {
+                        const date = new Date(q.submissionDate);
+                        submissionDateCell.textContent = date.toLocaleString();
+                    } else {
+                        submissionDateCell.textContent = '未知';
+                    }
+                    row.appendChild(submissionDateCell);
 
-                        tbody.appendChild(row);
-                    });
+                    tbody.appendChild(row);
                     table.appendChild(tbody);
 
                     // Append table to the queryResult div
@@ -428,7 +427,7 @@
                     queryResultDiv.classList.add('p-0', 'border-0', 'shadow-none'); // Adjust padding/border for table container
 
                 } else if (data.message) {
-                    // If no questions but a message is returned (e.g., "未找到该邮箱提交的题目")
+                    // If no question but a message is returned (e.g., "未找到 ID 为 XXX 的题目")
                     queryResultDiv.textContent = data.message;
                     queryResultDiv.classList.remove('hidden');
                     queryResultDiv.classList.add('text-center', 'bg-blue-50', 'border-blue-200', 'text-blue-800'); // Re-add styling for simple message
