@@ -269,7 +269,7 @@
                     </div>
                 </div>
 
-                <!-- 管理员工具部分 (保留但无内容) -->
+                <!-- 管理员  具部分 (保留但无内容) -->
                 <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
                     <p class="text-center text-gray-500">请从左侧导航选择具体工具。</p>
@@ -306,7 +306,7 @@
     <!-- Developer Info Footer -->
     <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
         <div class="container mx-auto">
-            <p>开发者信息：Mr_Onion</p>
+            <p>开  者信息：Mr_Onion</p>
             <p>联系邮箱：<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aacbcec7c3c4eac7d887c5c4c3c5c487c8c6c5cd84ccdfc4">[email&#160;protected]</a></p>
             <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
             <p class="mt-2">&copy; 2025 C++ Coding组题目审核后台. All rights reserved.</p>
@@ -422,32 +422,6 @@
             document.getElementById('commentInputOverlay').style.display = 'none';
             document.getElementById('commentInputModal').style.display = 'none';
         }
-
-        // Event listeners for comment input modal buttons
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('confirmCommentBtn').onclick = () => {
-                const comment = document.getElementById('commentInput').value;
-                hideCommentInputModal();
-                if (resolveCommentPromise) {
-                    resolveCommentPromise(comment);
-                }
-            };
-
-            document.getElementById('cancelCommentBtn').onclick = () => {
-                hideCommentInputModal();
-                if (rejectCommentPromise) {
-                    rejectCommentPromise(new Error('Comment input cancelled.'));
-                }
-            };
-
-            // Add event listeners for sidebar navigation
-            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const sectionId = this.dataset.section;
-                    showSection(sectionId);
-                });
-            });
-        });
 
         /**
          * Shows a specific content section and hides others.
@@ -667,6 +641,18 @@
                     questionsTable.appendChild(noQuestionsRow);
                 }
             })
+            .catch(error => {
+                console.error('Error:', error);
+                // If unauthorized, show login form
+                if (error.message === 'Unauthorized') {
+                    showMessageBox('会话已过期或未登录。请重新登录。');
+                    document.getElementById('adminPanel').classList.add('hidden');
+                    document.getElementById('loginForm').classList.remove('hidden');
+                } else {
+                    showMessageBox('加载题目列表失败。请检查您的 Cloudflare Worker 是否已部署且 URL 正确。错误详情: ' + error.message);
+                }
+            });
+        }
 
         /**
          * Displays the full details of a selected question and its actions.
@@ -1027,319 +1013,31 @@
                 showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
             }
         }
-            .catch(error => {
-                console.error('Error:', error);
-                // If unauthorized, show login form
-                if (error.message === 'Unauthorized') {
-                    showMessageBox('会话已过期或未登录。请重新登录。');
-                    document.getElementById('adminPanel').classList.add('hidden');
-                    document.getElementById('loginForm').classList.remove('hidden');
-                } else {
-                    showMessageBox('加载题目列表失败。请检查您的 Cloudflare Worker 是否已部署且 URL 正确。错误详情: ' + error.message);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('confirmCommentBtn').onclick = () => {
+                const comment = document.getElementById('commentInput').value;
+                hideCommentInputModal();
+                if (resolveCommentPromise) {
+                    resolveCommentPromise(comment);
                 }
+            };
+
+            document.getElementById('cancelCommentBtn').onclick = () => {
+                hideCommentInputModal();
+                if (rejectCommentPromise) {
+                    rejectCommentPromise(new Error('Comment input cancelled.'));
+                }
+            };
+
+            // Add event listeners for sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    showSection(sectionId);
+                });
             });
-        }
-
-        /**
-         * Downloads the question description as a markdown file.
-         * Assumes the backend provides a /admin/download/description/:id endpoint
-         * that returns the raw markdown content.
-         * @param {string} questionId - The ID of the question.
-         * @param {string} title - The title of the question, used for filename.
-         */
-        function downloadDescription(questionId, title) {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
-                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
-                return;
-            }
-            const fetchURL = `${WORKER_BASE_URL}/admin/download/description/${questionId}`;
-            console.log('Downloading description from:', fetchURL);
-
-            fetch(fetchURL, {
-                credentials: 'include' // Crucial for sending cookies with this request
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            showMessageBox('会话已过期或未登录。请重新登录。');
-                            document.getElementById('adminPanel').classList.add('hidden');
-                            document.getElementById('loginForm').classList.remove('hidden');
-                            return Promise.reject('Unauthorized');
-                        }
-                        // If it's not a 401, but still an error status, try to parse JSON for message
-                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
-                    }
-                    return response.text(); // Get raw text for markdown
-                })
-                .then(markdownContent => {
-                    const blob = new Blob([markdownContent], { type: 'text/markdown' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${title}.md`; // Use question title for filename
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url); // Clean up
-                    showMessageBox('题目描述下载成功！');
-                })
-                .catch(error => {
-                    console.error('Error downloading description:', error); // Log the full error object
-                    showMessageBox('下载题目描述失败。错误详情: ' + (error.message || error));
-                });
-        }
-
-        /**
-         * Downloads the data package as a zip file.
-         * Assumes the backend provides a /admin/download/data/:id endpoint
-         * that returns the raw zip file content.
-         * @param {string} questionId - The ID of the question.
-         * @param {string} title - The title of the question, used for filename.
-         */
-        function downloadDataPackage(questionId, title) {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
-                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
-                return;
-            }
-            const fetchURL = `${WORKER_BASE_URL}/admin/download/data/${questionId}`;
-            console.log('Downloading data package from:', fetchURL);
-
-            fetch(fetchURL, {
-                credentials: 'include' // Crucial for sending cookies with this request
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            showMessageBox('会话已过期或未登录。请重新登录。');
-                            document.getElementById('adminPanel').classList.add('hidden');
-                            document.getElementById('loginForm').classList.remove('hidden');
-                            return Promise.reject('Unauthorized');
-                        }
-                        // If it's not a 401, but still an error status, try to parse JSON for message
-                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
-                    }
-                    return response.blob(); // Get as Blob for binary data
-                })
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${title}_data.zip`; // Use question title for filename
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url); // Clean up
-                    showMessageBox('数据包下载成  ！');
-                })
-                .catch(error => {
-                    console.error('Error downloading data package:', error); // Log the full error object
-                    showMessageBox('下载数据包失败。错误详情: ' + (error.message || error));
-                });
-        }
-
-        /**
-         * Approves a question by sending a POST request to the backend.
-         * Calls the Cloudflare Worker to approve a question.
-         * @param {string} questionId - The ID of the question to approve.
-         * @param {string} comment - The comment for the approval.
-         */
-        function approveQuestion(questionId, comment) {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
-                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
-                return;
-            }
-            const fetchURL = `${WORKER_BASE_URL}/admin/approve/${questionId}`;
-            console.log('Approving question at:', fetchURL, 'with comment:', comment);
-            fetch(fetchURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comment: comment }),
-                credentials: 'include' // Crucial for sending cookies with this request
-            })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        showMessageBox('会话已过期或未登录。请重新登录。');
-                        document.getElementById('adminPanel').classList.add('hidden');
-                        document.getElementById('loginForm').classList.remove('hidden');
-                        return Promise.reject('Unauthorized');
-                    }
-                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                showMessageBox(data.message);
-                loadQuestions();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessageBox('通过审核失败。错误详情: ' + error.message);
-            });
-        }
-
-        /**
-         * Rejects a question by sending a POST request to the backend.
-         * Calls the Cloudflare Worker to reject a question.
-         * @param {string} questionId - The ID of the question to reject.
-         * @param {string} comment - The comment for the rejection.
-         */
-        function rejectQuestion(questionId, comment) {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
-                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
-                return;
-            }
-            const fetchURL = `${WORKER_BASE_URL}/admin/reject/${questionId}`;
-            console.log('Rejecting question at:', fetchURL, 'with comment:', comment);
-            fetch(fetchURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comment: comment }),
-                credentials: 'include' // Crucial for sending cookies with this request
-            })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        showMessageBox('会话已过期或未登录。请重新登录。');
-                        document.getElementById('adminPanel').classList.add('hidden');
-                        document.getElementById('loginForm').classList.remove('hidden');
-                        return Promise.reject('Unauthorized');
-                    }
-                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                showMessageBox(data.message);
-                loadQuestions();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessageBox('拒绝审核失败。错误详情: ' + error.message);
-            });
-        }
-
-        /**
-         * Adds an IP address to the blacklist.
-         */
-        async function addIpToBlacklist() {
-            const ip = document.getElementById('ipInput').value.trim();
-            if (!ip) {
-                showMessageBox('请输入要加入黑名单的IP地址。');
-                return;
-            }
-
-            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ip`;
-            try {
-                const response = await fetch(fetchURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ip: ip }),
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showMessageBox(data.message);
-                    document.getElementById('ipInput').value = ''; // Clear input
-                    loadBlacklistedIps(); // Refresh the list
-                } else {
-                    showMessageBox(data.message || '加入黑名单失败。');
-                }
-            } catch (error) {
-                console.error('Error adding IP to blacklist:', error);
-                showMessageBox('加入黑名单失败。错误详情: ' + error.message);
-            }
-        }
-
-        /**
-         * Removes an IP address from the blacklist.
-         */
-        async function removeIpFromBlacklist() {
-            const ip = document.getElementById('ipInput').value.trim();
-            if (!ip) {
-                showMessageBox('请输入要从黑名单移除的IP地址。');
-                return;
-            }
-
-            const fetchURL = `${WORKER_BASE_URL}/admin/unblacklist-ip`;
-            try {
-                const response = await fetch(fetchURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ip: ip }),
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showMessageBox(data.message);
-                    document.getElementById('ipInput').value = ''; // Clear input
-                    loadBlacklistedIps(); // Refresh the list
-                } else {
-                    showMessageBox(data.message || '从黑名单移除失败。');
-                }
-            } catch (error) {
-                console.error('Error removing IP from blacklist:', error);
-                showMessageBox('从黑名单移除失败。错误详情: ' + error.message);
-            }
-        }
-
-        /**
-         * Loads the list of blacklisted IPs from the backend and displays them.
-         */
-        async function loadBlacklistedIps() {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                console.error('WORKER_BASE_URL is not set for blacklist functions.');
-                return;
-            }
-
-            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ips`;
-            try {
-                const response = await fetch(fetchURL, {
-                    credentials: 'include'
-                });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        // If not authorized, don't show an error, just don't load the list
-                        console.warn('Not authorized to load blacklisted IPs. Session might have expired.');
-                        return;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                const blacklistedIpsList = document.getElementById('blacklistedIpsList');
-                blacklistedIpsList.innerHTML = ''; // Clear current list
-
-                if (data.ips && data.ips.length > 0) {
-                    data.ips.forEach(ip => {
-                        const listItem = document.createElement('li');
-                        listItem.classList.add('py-2', 'px-4', 'flex', 'justify-between', 'items-center');
-                        listItem.textContent = ip;
-
-                        const removeButton = document.createElement('button');
-                        removeButton.textContent = '移除';
-                        removeButton.classList.add('ml-4', 'px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'focus:outline-none');
-                        removeButton.onclick = async () => {
-                            document.getElementById('ipInput').value = ip; // Populate input for easy removal
-                            await removeIpFromBlacklist();
-                        };
-                        listItem.appendChild(removeButton);
-                        blacklistedIpsList.appendChild(listItem);
-                    });
-                } else {
-                    const noIpItem = document.createElement('li');
-                    noIpItem.classList.add('py-2', 'text-center', 'text-gray-500');
-                    noIpItem.textContent = '暂无黑名单IP。';
-                    blacklistedIpsList.appendChild(noIpItem);
-                }
-            } catch (error) {
-                console.error('Error loading blacklisted IPs:', error);
-                showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
-            }
-        }
+        });
     </script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
 </body>
