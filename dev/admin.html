@@ -159,6 +159,7 @@
                             <thead>
                                 <tr>
                                     <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目ID</th>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
                                     <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                 </tr>
                             </thead>
@@ -631,106 +632,27 @@
                         const row = document.createElement('tr');
                         row.classList.add('hover:bg-gray-50');
 
+                        const idCell = document.createElement('td');
+                        idCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
+                        idCell.textContent = question._id;
+                        row.appendChild(idCell);
+
                         const titleCell = document.createElement('td');
                         titleCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
                         titleCell.textContent = question.questionTitle;
                         row.appendChild(titleCell);
 
-                        const authorCell = document.createElement('td');
-                        authorCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        authorCell.textContent = question.questionAuthor;
-                        row.appendChild(authorCell);
-
-                        const difficultyCell = document.createElement('td');
-                        difficultyCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        difficultyCell.textContent = getChineseDifficulty(question.questionDifficulty);
-                        row.appendChild(difficultyCell);
-
-                        const statusCell = document.createElement('td');
-                        statusCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        statusCell.textContent = getChineseStatus(question.status);
-                        row.appendChild(statusCell);
-
-                        const commentCell = document.createElement('td');
-                        commentCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        commentCell.textContent = question.comment || '无';
-                        row.appendChild(commentCell);
-
-                        // New: Submission Date Cell
-                        const submissionDateCell = document.createElement('td');
-                        submissionDateCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        if (question.submissionDate) {
-                            const date = new Date(question.submissionDate);
-                            submissionDateCell.textContent = date.toLocaleString();
-                        } else {
-                            submissionDateCell.textContent = '未知';
-                        }
-                        row.appendChild(submissionDateCell);
-
-                        // New: Submitter IP Cell
-                        const submitterIpCell = document.createElement('td');
-                        submitterIpCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        submitterIpCell.textContent = question.submitterIp || '未知'; // Display IP, or '未知' if not present
-                        row.appendChild(submitterIpCell);
-
                         const actionCell = document.createElement('td');
                         actionCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
 
-                        // Download Description Button
-                        const downloadDescButton = document.createElement('button');
-                        downloadDescButton.textContent = '下载描述';
-                        downloadDescButton.onclick = () => downloadDescription(question._id, question.questionTitle);
-                        downloadDescButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-purple-600',
-                                                        'hover:bg-purple-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-purple-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                        actionCell.appendChild(downloadDescButton);
-
-                        // Download Data Package Button
-                        const downloadDataButton = document.createElement('button');
-                        downloadDataButton.textContent = '下载数据包';
-                        downloadDataButton.onclick = () => downloadDataPackage(question._id, question.questionTitle);
-                        downloadDataButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-indigo-600',
-                                                        'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-indigo-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                        actionCell.appendChild(downloadDataButton);
-
-
-                        if (question.status === 'pending') { // Only show approve/reject for pending questions
-                            const approveButton = document.createElement('button');
-                            approveButton.textContent = '通过';
-                            approveButton.onclick = async () => {
-                                try {
-                                    const comment = await showCommentInputModal('请输入通过意见');
-                                    approveQuestion(question._id, comment);
-                                } catch (error) {
-                                    console.log(error.message);
-                                }
-                            };
-                            approveButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-green-600',
-                                                        'hover:bg-green-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-green-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                            actionCell.appendChild(approveButton);
-
-                            const rejectButton = document.createElement('button');
-                            rejectButton.textContent = '拒绝';
-                            rejectButton.onclick = async () => {
-                                try {
-                                    const comment = await showCommentInputModal('请输入拒绝意见');
-                                    rejectQuestion(question._id, comment);
-                                } catch (error) {
-                                    console.log(error.message);
-                                }
-                            };
-                            rejectButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-red-600',
-                                                        'hover:bg-red-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-red-500', 'transition', 'duration-150', 'ease-in-out', 'mb-1');
-                            actionCell.appendChild(rejectButton);
-                        }
-
+                        const viewDetailsButton = document.createElement('button');
+                        viewDetailsButton.textContent = '查看题目详情';
+                        viewDetailsButton.onclick = () => showQuestionDetails(question);
+                        viewDetailsButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-blue-600',
+                                                        'hover:bg-blue-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-blue-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
+                        actionCell.appendChild(viewDetailsButton);
 
                         row.appendChild(actionCell);
                         questionsTable.appendChild(row);
@@ -738,13 +660,373 @@
                 } else {
                     const noQuestionsRow = document.createElement('tr');
                     const noQuestionsCell = document.createElement('td');
-                    noQuestionsCell.setAttribute('colspan', '8'); // Adjusted colspan for the new '提  者IP' column
+                    noQuestionsCell.setAttribute('colspan', '3'); // Adjusted colspan for ID, Title, and Action
                     noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
                     noQuestionsCell.textContent = '暂无题目。';
                     noQuestionsRow.appendChild(noQuestionsCell);
                     questionsTable.appendChild(noQuestionsRow);
                 }
             })
+
+        /**
+         * Displays the full details of a selected question and its actions.
+         * @param {object} question - The full question object.
+         */
+        function showQuestionDetails(question) {
+            showSection('questionDetailsSection'); // Switch to the details section
+
+            const detailsContent = document.getElementById('questionDetailsContent');
+            detailsContent.innerHTML = `
+                <p><strong>题目ID:</strong> ${question._id}</p>
+                <p><strong>OJ昵称:</strong> ${question.ojName || 'N/A'}</p>
+                <p><strong>UID:</strong> ${question.uid || 'N/A'}</p>
+                <p><strong>邮箱:</strong> ${question.email || 'N/A'}</p>
+                <p><strong>获奖经历:</strong> ${question.awards || '无'}</p>
+                <p><strong>题目标题:</strong> ${question.questionTitle || 'N/A'}</p>
+                <p><strong>出题人:</strong> ${question.questionAuthor || 'N/A'}</p>
+                <p><strong>难度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
+                <p><strong>状态:</strong> ${getChineseStatus(question.status)}</p>
+                <p><strong>审核意见:</strong> ${question.comment || '无'}</p>
+                <p><strong>提交时间:</strong> ${question.submissionDate ? new Date(question.submissionDate).toLocaleString() : '未知'}</p>
+                <p><strong>提交者IP:</strong> ${question.submitterIp || '未知'}</p>
+                <h3 class="text-xl font-semibold mt-4 mb-2">题目描述:</h3>
+                <div class="border p-4 rounded-md bg-gray-50 overflow-auto max-h-96">
+                    <pre class="whitespace-pre-wrap">${question.questionDescription || '无描述'}</pre>
+                </div>
+            `;
+
+            // Update action buttons in the details section
+            document.getElementById('approveDetailBtn').onclick = async () => {
+                try {
+                    const comment = await showCommentInputModal('请输入通过意见');
+                    approveQuestion(question._id, comment);
+                } catch (error) {
+                    console.log(error.message);
+                }
+            };
+            document.getElementById('rejectDetailBtn').onclick = async () => {
+                try {
+                    const comment = await showCommentInputModal('请输入拒绝意见');
+                    rejectQuestion(question._id, comment);
+                } catch (error) {
+                    console.log(error.message);
+                }
+            };
+            document.getElementById('downloadDescDetailBtn').onclick = () => downloadDescription(question._id, question.questionTitle);
+            document.getElementById('downloadDataDetailBtn').onclick = () => downloadDataPackage(question._id, question.questionTitle);
+
+            // Hide approve/reject buttons if question is not pending
+            if (question.status !== 'pending') {
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.add('hidden');
+            } else {
+                document.getElementById('approveDetailBtn').classList.remove('hidden');
+                document.getElementById('rejectDetailBtn').classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Downloads the question description as a markdown file.
+         * Assumes the backend provides a /admin/download/description/:id endpoint
+         * that returns the raw markdown content.
+         * @param {string} questionId - The ID of the question.
+         * @param {string} title - The title of the question, used for filename.
+         */
+        function downloadDescription(questionId, title) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/download/description/${questionId}`;
+            console.log('Downloading description from:', fetchURL);
+
+            fetch(fetchURL, {
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            showMessageBox('会话已过期或未登录。请重新登录。');
+                            document.getElementById('adminPanel').classList.add('hidden');
+                            document.getElementById('loginForm').classList.remove('hidden');
+                            return Promise.reject('Unauthorized');
+                        }
+                        // If it's not a 401, but still an error status, try to parse JSON for message
+                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.text(); // Get raw text for markdown
+                })
+                .then(markdownContent => {
+                    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${title}.md`; // Use question title for filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url); // Clean up
+                    showMessageBox('题目描述下载成功！');
+                })
+                .catch(error => {
+                    console.error('Error downloading description:', error); // Log the full error object
+                    showMessageBox('下载题目描述失败。错误详情: ' + (error.message || error));
+                });
+        }
+
+        /**
+         * Downloads the data package as a zip file.
+         * Assumes the backend provides a /admin/download/data/:id endpoint
+         * that returns the raw zip file content.
+         * @param {string} questionId - The ID of the question.
+         * @param {string} title - The title of the question, used for filename.
+         */
+        function downloadDataPackage(questionId, title) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/download/data/${questionId}`;
+            console.log('Downloading data package from:', fetchURL);
+
+            fetch(fetchURL, {
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            showMessageBox('会话已过期或未登录。请重新登录。');
+                            document.getElementById('adminPanel').classList.add('hidden');
+                            document.getElementById('loginForm').classList.remove('hidden');
+                            return Promise.reject('Unauthorized');
+                        }
+                        // If it's not a 401, but still an error status, try to parse JSON for message
+                        return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                    }
+                    return response.blob(); // Get as Blob for binary data
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${title}_data.zip`; // Use question title for filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url); // Clean up
+                    showMessageBox('数据包下载成功！');
+                })
+                .catch(error => {
+                    console.error('Error downloading data package:', error); // Log the full error object
+                    showMessageBox('下载数据包失败。错误详情: ' + (error.message || error));
+                });
+        }
+
+        /**
+         * Approves a question by sending a POST request to the backend.
+         * Calls the Cloudflare Worker to approve a question.
+         * @param {string} questionId - The ID of the question to approve.
+         * @param {string} comment - The comment for the approval.
+         */
+        function approveQuestion(questionId, comment) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/approve/${questionId}`;
+            console.log('Approving question at:', fetchURL, 'with comment:', comment);
+            fetch(fetchURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comment: comment }),
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessageBox('会话已过期或未登录。请重新登录。');
+                        document.getElementById('adminPanel').classList.add('hidden');
+                        document.getElementById('loginForm').classList.remove('hidden');
+                        return Promise.reject('Unauthorized');
+                    }
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessageBox(data.message);
+                showSection('questionsSection'); // Go back to list after action
+                loadQuestions();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessageBox('通过审核失败。错误详情: ' + error.message);
+            });
+        }
+
+        /**
+         * Rejects a question by sending a POST request to the backend.
+         * Calls the Cloudflare Worker to reject a question.
+         * @param {string} questionId - The ID of the question to reject.
+         * @param {string} comment - The comment for the rejection.
+         */
+        function rejectQuestion(questionId, comment) {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+            const fetchURL = `${WORKER_BASE_URL}/admin/reject/${questionId}`;
+            console.log('Rejecting question at:', fetchURL, 'with comment:', comment);
+            fetch(fetchURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comment: comment }),
+                credentials: 'include' // Crucial for sending cookies with this request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessageBox('会话已过期或未登录。请重新登录。');
+                        document.getElementById('adminPanel').classList.add('hidden');
+                        document.getElementById('loginForm').classList.remove('hidden');
+                        return Promise.reject('Unauthorized');
+                    }
+                    return response.json().then(err => { throw new Error(err.message || `HTTP error! status: ${response.status}`); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessageBox(data.message);
+                showSection('questionsSection'); // Go back to list after action
+                loadQuestions();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessageBox('拒绝审核失败。错误详情: ' + error.message);
+            });
+        }
+
+        /**
+         * Adds an IP address to the blacklist.
+         */
+        async function addIpToBlacklist() {
+            const ip = document.getElementById('ipInput').value.trim();
+            if (!ip) {
+                showMessageBox('请输入要加入黑名单的IP地址。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ip`;
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip }),
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    document.getElementById('ipInput').value = ''; // Clear input
+                    loadBlacklistedIps(); // Refresh the list
+                } else {
+                    showMessageBox(data.message || '加入黑名单失败。');
+                }
+            } catch (error) {
+                console.error('Error adding IP to blacklist:', error);
+                showMessageBox('加入黑名单失败。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Removes an IP address from the blacklist.
+         */
+        async function removeIpFromBlacklist() {
+            const ip = document.getElementById('ipInput').value.trim();
+            if (!ip) {
+                showMessageBox('请输入要从黑名单移除的IP地址。');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/unblacklist-ip`;
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip }),
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    document.getElementById('ipInput').value = ''; // Clear input
+                    loadBlacklistedIps(); // Refresh the list
+                } else {
+                    showMessageBox(data.message || '从黑名单移除失败。');
+                }
+            } catch (error) {
+                console.error('Error removing IP from blacklist:', error);
+                showMessageBox('从黑名单移除失败。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Loads the list of blacklisted IPs from the backend and displays them.
+         */
+        async function loadBlacklistedIps() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                console.error('WORKER_BASE_URL is not set for blacklist functions.');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ips`;
+            try {
+                const response = await fetch(fetchURL, {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // If not authorized, don't show an error, just don't load the list
+                        console.warn('Not authorized to load blacklisted IPs. Session might have expired.');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const blacklistedIpsList = document.getElementById('blacklistedIpsList');
+                blacklistedIpsList.innerHTML = ''; // Clear current list
+
+                if (data.ips && data.ips.length > 0) {
+                    data.ips.forEach(ip => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('py-2', 'px-4', 'flex', 'justify-between', 'items-center');
+                        listItem.textContent = ip;
+
+                        const removeButton = document.createElement('button');
+                        removeButton.textContent = '移除';
+                        removeButton.classList.add('ml-4', 'px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'focus:outline-none');
+                        removeButton.onclick = async () => {
+                            document.getElementById('ipInput').value = ip; // Populate input for easy removal
+                            await removeIpFromBlacklist();
+                        };
+                        listItem.appendChild(removeButton);
+                        blacklistedIpsList.appendChild(listItem);
+                    });
+                } else {
+                    const noIpItem = document.createElement('li');
+                    noIpItem.classList.add('py-2', 'text-center', 'text-gray-500');
+                    noIpItem.textContent = '暂无黑名单IP。';
+                    blacklistedIpsList.appendChild(noIpItem);
+                }
+            } catch (error) {
+                console.error('Error loading blacklisted IPs:', error);
+                showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
+            }
+        }
             .catch(error => {
                 console.error('Error:', error);
                 // If unauthorized, show login form
