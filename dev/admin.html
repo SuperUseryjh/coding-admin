@@ -220,7 +220,7 @@
                                     class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                            transition duration-150 ease-in-out">
-                                加入黑名单
+                                加入黑   单
                             </button>
                             <button type="button" onclick="removeIpFromBlacklist()"
                                     class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
@@ -239,7 +239,7 @@
                     </div>
                 </div>
 
-                <!-- 修改管理员密码部分 -->
+                <!-- 修  管理员密码部分 -->
                 <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto">
@@ -269,7 +269,7 @@
                     </div>
                 </div>
 
-                <!-- 管理员  具部分 (保留但无内容) -->
+                <!-- 管理员工具部分 (保留但无内容) -->
                 <div id="adminToolsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员工具</h2>
                     <p class="text-center text-gray-500">请从左侧导航选择具体工具。</p>
@@ -306,7 +306,7 @@
     <!-- Developer Info Footer -->
     <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
         <div class="container mx-auto">
-            <p>开  者信息：Mr_Onion</p>
+            <p>开发者信息：Mr_Onion</p>
             <p>联系邮箱：<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aacbcec7c3c4eac7d887c5c4c3c5c487c8c6c5cd84ccdfc4">[email&#160;protected]</a></p>
             <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
             <p class="mt-2">&copy; 2025 C++ Coding组题目审核后台. All rights reserved.</p>
@@ -429,21 +429,33 @@
          * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
          */
         function showSection(sectionId) {
-            // Hide all content sections
-            document.getElementById('questionsSection').classList.add('hidden');
-            document.getElementById('ipBlacklistSection').classList.add('hidden');
-            document.getElementById('changePasswordSection').classList.add('hidden');
-            document.getElementById('adminToolsSection').classList.add('hidden'); // Keep this hidden as it's now just a placeholder
-            document.getElementById('questionDetailsSection').classList.add('hidden'); // Explicitly hide details section
+            // Hide all content sections safely
+            const sections = ['questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) { // Check if element exists before trying to access classList
+                    element.classList.add('hidden');
+                } else {
+                    console.warn(`Element with ID '${id}' not found when trying to hide.`);
+                }
+            });
 
             // Show the selected section
-            document.getElementById(sectionId).classList.remove('hidden');
+            const selectedElement = document.getElementById(sectionId);
+            if (selectedElement) {
+                selectedElement.classList.remove('hidden');
+            } else {
+                console.error(`Element with ID '${sectionId}' not found when trying to show.`);
+            }
 
             // Update active class in sidebar
             document.querySelectorAll('.sidebar-nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`).classList.add('active');
+            const activeSidebarItem = document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`);
+            if (activeSidebarItem) {
+                activeSidebarItem.classList.add('active');
+            }
 
             // Load data specific to the section if needed
             if (sectionId === 'questionsSection') {
@@ -671,7 +683,7 @@
                 <p><strong>获奖经历:</strong> ${question.awards || '无'}</p>
                 <p><strong>题目标题:</strong> ${question.questionTitle || 'N/A'}</p>
                 <p><strong>出题人:</strong> ${question.questionAuthor || 'N/A'}</p>
-                <p><strong>   度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
+                <p><strong>难度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
                 <p><strong>状态:</strong> ${getChineseStatus(question.status)}</p>
                 <p><strong>审核意见:</strong> ${question.comment || '无'}</p>
                 <p><strong>提交时间:</strong> ${question.submissionDate ? new Date(question.submissionDate).toLocaleString() : '未知'}</p>
