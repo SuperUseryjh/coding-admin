@@ -7,6 +7,8 @@
     <link rel="icon" href="https://mr-onion-blog.fun/img/avatar.png" type="image/png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -102,8 +104,8 @@
 </head>
 <body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
     <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
-        <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组题目审核后台</h1>
-        <p class="text-center text-gray-600 mb-8">管理员可以在这里审核提交的题目。</p>
+        <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组   目审核后台</h1>
+        <p class="text-center text-gray-600 mb-8">管理员可   在这里审核提交的题目。</p>
 
         <!-- 管理员登录表单 -->
         <h2 id="loginTitle" class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员登录</h2>
@@ -220,7 +222,7 @@
                                     class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                            transition duration-150 ease-in-out">
-                                加入黑   单
+                                加入黑名单
                             </button>
                             <button type="button" onclick="removeIpFromBlacklist()"
                                     class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
@@ -239,7 +241,7 @@
                     </div>
                 </div>
 
-                <!-- 修  管理员密码部分 -->
+                <!-- 修改管理员密码部分 -->
                 <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto">
@@ -505,7 +507,7 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showMessageBox('登录过程中发生错误。错误详情: ' + error.message);
+                showMessageBox('登录过程中发生错   。错误详情: ' + error.message);
             }
         }
 
@@ -689,11 +691,16 @@
                 <p><strong>提交时间:</strong> ${question.submissionDate ? new Date(question.submissionDate).toLocaleString() : '未知'}</p>
                 <p><strong>提交者IP:</strong> ${question.submitterIp || '未知'}</p>
                 <h3 class="text-xl font-semibold mt-4 mb-2">题目描述:</h3>
-                <div class="border p-4 rounded-md bg-gray-50 overflow-auto max-h-96">
-                    <pre class="whitespace-pre-wrap">${question.questionDescription || '无描述'}</pre>
+                <div class="border p-4 rounded-md bg-gray-50 overflow-auto max-h-96" id="renderedDescriptionContent">
+                    <!-- Markdown will be rendered here -->
                 </div>
             `;
             console.log('题目详情HTML内容:', detailsContent.innerHTML); // Debug log for the generated HTML
+
+            const renderedDescriptionDiv = document.getElementById('renderedDescriptionContent');
+            if (renderedDescriptionDiv) {
+                renderedDescriptionDiv.innerHTML = marked.parse(question.questionDescription || '无描述');
+            }
 
             // Update action buttons in the details section
             document.getElementById('approveDetailBtn').onclick = async () => {
