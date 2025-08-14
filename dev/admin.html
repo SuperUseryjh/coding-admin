@@ -220,7 +220,7 @@
                                     class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                            transition duration-150 ease-in-out">
-                                加入黑   单
+                                加入黑名单
                             </button>
                             <button type="button" onclick="removeIpFromBlacklist()"
                                     class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
@@ -239,7 +239,7 @@
                     </div>
                 </div>
 
-                <!-- 修  管理员密码部分 -->
+                <!-- 修改管理员密码部分 -->
                 <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto">
@@ -659,6 +659,7 @@
          * @param {object} question - The full question object.
          */
         function showQuestionDetails(question) {
+            console.log('显示题目详情:', question); // Debug log for the question object
             showSection('questionDetailsSection'); // Switch to the details section
 
             const detailsContent = document.getElementById('questionDetailsContent');
@@ -670,7 +671,7 @@
                 <p><strong>获奖经历:</strong> ${question.awards || '无'}</p>
                 <p><strong>题目标题:</strong> ${question.questionTitle || 'N/A'}</p>
                 <p><strong>出题人:</strong> ${question.questionAuthor || 'N/A'}</p>
-                <p><strong>难度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
+                <p><strong>   度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
                 <p><strong>状态:</strong> ${getChineseStatus(question.status)}</p>
                 <p><strong>审核意见:</strong> ${question.comment || '无'}</p>
                 <p><strong>提交时间:</strong> ${question.submissionDate ? new Date(question.submissionDate).toLocaleString() : '未知'}</p>
@@ -680,6 +681,7 @@
                     <pre class="whitespace-pre-wrap">${question.questionDescription || '无描述'}</pre>
                 </div>
             `;
+            console.log('题目详情HTML内容:', detailsContent.innerHTML); // Debug log for the generated HTML
 
             // Update action buttons in the details section
             document.getElementById('approveDetailBtn').onclick = async () => {
