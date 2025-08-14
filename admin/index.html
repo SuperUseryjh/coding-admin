@@ -103,7 +103,7 @@
 <body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
     <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
         <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组题目审核后台</h1>
-        <p class="text-center text-gray-600 mb-8">管理员可   在这里审核提交的题目。</p>
+        <p class="text-center text-gray-600 mb-8">管理员可以在这里审核提交的题目。</p>
 
         <!-- 管理员登录表单 -->
         <h2 id="loginTitle" class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员登录</h2>
@@ -158,13 +158,8 @@
                         <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
                             <thead>
                                 <tr>
+                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目ID</th>
                                     <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">题目标题</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出题人</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">难度</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">意见</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
-                                    <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">提交者IP</th>
                                     <th class="px-4 py-2 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                                 </tr>
                             </thead>
@@ -172,6 +167,42 @@
                                 <!-- 数据将通过AJAX动态加载 -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- 题目详情部分 -->
+                <div id="questionDetailsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目详情</h2>
+                    <div id="questionDetailsContent" class="text-gray-700">
+                        <!-- 题目详细信息将在这里加载 -->
+                    </div>
+                    <div class="mt-6 flex justify-center space-x-4">
+                        <button onclick="showSection('questionsSection')"
+                                class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            返回题目列表
+                        </button>
+                        <button id="approveDetailBtn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            通过
+                        </button>
+                        <button id="rejectDetailBtn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            拒绝
+                        </button>
+                        <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            下载描述
+                        </button>
+                        <button id="downloadDataDetailBtn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                                       transition duration-150 ease-in-out">
+                            下载数据包
+                        </button>
                     </div>
                 </div>
 
@@ -189,7 +220,7 @@
                                     class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                            transition duration-150 ease-in-out">
-                                加入黑名单
+                                加入黑   单
                             </button>
                             <button type="button" onclick="removeIpFromBlacklist()"
                                     class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
@@ -208,7 +239,7 @@
                     </div>
                 </div>
 
-                <!-- 修改管理员密码部分 -->
+                <!-- 修  管理员密码部分 -->
                 <div id="changePasswordSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">修改管理员密码</h2>
                     <div class="flex flex-col gap-4 max-w-md mx-auto">
@@ -392,53 +423,39 @@
             document.getElementById('commentInputModal').style.display = 'none';
         }
 
-        // Event listeners for comment input modal buttons
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('confirmCommentBtn').onclick = () => {
-                const comment = document.getElementById('commentInput').value;
-                hideCommentInputModal();
-                if (resolveCommentPromise) {
-                    resolveCommentPromise(comment);
-                }
-            };
-
-            document.getElementById('cancelCommentBtn').onclick = () => {
-                hideCommentInputModal();
-                if (rejectCommentPromise) {
-                    rejectCommentPromise(new Error('Comment input cancelled.'));
-                }
-            };
-
-            // Add event listeners for sidebar navigation
-            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const sectionId = this.dataset.section;
-                    showSection(sectionId);
-                });
-            });
-        });
-
         /**
          * Shows a specific content section and hides others.
          * Also updates the active state of sidebar navigation items.
          * @param {string} sectionId - The ID of the section to show (e.g., 'questionsSection', 'adminToolsSection').
          */
         function showSection(sectionId) {
-            // Hide all content sections
-            // 隐藏所有内容部分
-            document.getElementById('questionsSection').classList.add('hidden');
-            document.getElementById('ipBlacklistSection').classList.add('hidden');
-            document.getElementById('changePasswordSection').classList.add('hidden');
-            document.getElementById('adminToolsSection').classList.add('hidden'); // Keep this hidden as it's now just a placeholder
+            // Hide all content sections safely
+            const sections = ['questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) { // Check if element exists before trying to access classList
+                    element.classList.add('hidden');
+                } else {
+                    console.warn(`Element with ID '${id}' not found when trying to hide.`);
+                }
+            });
 
             // Show the selected section
-            document.getElementById(sectionId).classList.remove('hidden');
+            const selectedElement = document.getElementById(sectionId);
+            if (selectedElement) {
+                selectedElement.classList.remove('hidden');
+            } else {
+                console.error(`Element with ID '${sectionId}' not found when trying to show.`);
+            }
 
             // Update active class in sidebar
             document.querySelectorAll('.sidebar-nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`).classList.add('active');
+            const activeSidebarItem = document.querySelector(`.sidebar-nav-item[data-section="${sectionId}"]`);
+            if (activeSidebarItem) {
+                activeSidebarItem.classList.add('active');
+            }
 
             // Load data specific to the section if needed
             if (sectionId === 'questionsSection') {
@@ -601,106 +618,27 @@
                         const row = document.createElement('tr');
                         row.classList.add('hover:bg-gray-50');
 
+                        const idCell = document.createElement('td');
+                        idCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
+                        idCell.textContent = question._id;
+                        row.appendChild(idCell);
+
                         const titleCell = document.createElement('td');
                         titleCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
                         titleCell.textContent = question.questionTitle;
                         row.appendChild(titleCell);
 
-                        const authorCell = document.createElement('td');
-                        authorCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        authorCell.textContent = question.questionAuthor;
-                        row.appendChild(authorCell);
-
-                        const difficultyCell = document.createElement('td');
-                        difficultyCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        difficultyCell.textContent = getChineseDifficulty(question.questionDifficulty);
-                        row.appendChild(difficultyCell);
-
-                        const statusCell = document.createElement('td');
-                        statusCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        statusCell.textContent = getChineseStatus(question.status);
-                        row.appendChild(statusCell);
-
-                        const commentCell = document.createElement('td');
-                        commentCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        commentCell.textContent = question.comment || '无';
-                        row.appendChild(commentCell);
-
-                        // New: Submission Date Cell
-                        const submissionDateCell = document.createElement('td');
-                        submissionDateCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        if (question.submissionDate) {
-                            const date = new Date(question.submissionDate);
-                            submissionDateCell.textContent = date.toLocaleString();
-                        } else {
-                            submissionDateCell.textContent = '未知';
-                        }
-                        row.appendChild(submissionDateCell);
-
-                        // New: Submitter IP Cell
-                        const submitterIpCell = document.createElement('td');
-                        submitterIpCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                        submitterIpCell.textContent = question.submitterIp || '未知'; // Display IP, or '未知' if not present
-                        row.appendChild(submitterIpCell);
-
                         const actionCell = document.createElement('td');
                         actionCell.classList.add('px-4', 'py-2', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
 
-                        // Download Description Button
-                        const downloadDescButton = document.createElement('button');
-                        downloadDescButton.textContent = '下载描述';
-                        downloadDescButton.onclick = () => downloadDescription(question._id, question.questionTitle);
-                        downloadDescButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-purple-600',
-                                                        'hover:bg-purple-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-purple-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                        actionCell.appendChild(downloadDescButton);
-
-                        // Download Data Package Button
-                        const downloadDataButton = document.createElement('button');
-                        downloadDataButton.textContent = '下载数据包';
-                        downloadDataButton.onclick = () => downloadDataPackage(question._id, question.questionTitle);
-                        downloadDataButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-indigo-600',
-                                                        'hover:bg-indigo-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-indigo-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                        actionCell.appendChild(downloadDataButton);
-
-
-                        if (question.status === 'pending') { // Only show approve/reject for pending questions
-                            const approveButton = document.createElement('button');
-                            approveButton.textContent = '通过';
-                            approveButton.onclick = async () => {
-                                try {
-                                    const comment = await showCommentInputModal('请输入通过意见');
-                                    approveQuestion(question._id, comment);
-                                } catch (error) {
-                                    console.log(error.message);
-                                }
-                            };
-                            approveButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-green-600',
-                                                        'hover:bg-green-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-green-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
-                            actionCell.appendChild(approveButton);
-
-                            const rejectButton = document.createElement('button');
-                            rejectButton.textContent = '拒绝';
-                            rejectButton.onclick = async () => {
-                                try {
-                                    const comment = await showCommentInputModal('请输入拒绝意见');
-                                    rejectQuestion(question._id, comment);
-                                } catch (error) {
-                                    console.log(error.message);
-                                }
-                            };
-                            rejectButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
-                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-red-600',
-                                                        'hover:bg-red-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
-                                                        'focus:ring-red-500', 'transition', 'duration-150', 'ease-in-out', 'mb-1');
-                            actionCell.appendChild(rejectButton);
-                        }
-
+                        const viewDetailsButton = document.createElement('button');
+                        viewDetailsButton.textContent = '查看题目详情';
+                        viewDetailsButton.onclick = () => showQuestionDetails(question);
+                        viewDetailsButton.classList.add('inline-flex', 'items-center', 'px-3', 'py-1.5', 'border', 'border-transparent',
+                                                        'text-xs', 'font-medium', 'rounded-md', 'shadow-sm', 'text-white', 'bg-blue-600',
+                                                        'hover:bg-blue-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2',
+                                                        'focus:ring-blue-500', 'transition', 'duration-150', 'ease-in-out', 'mr-2', 'mb-1');
+                        actionCell.appendChild(viewDetailsButton);
 
                         row.appendChild(actionCell);
                         questionsTable.appendChild(row);
@@ -708,7 +646,7 @@
                 } else {
                     const noQuestionsRow = document.createElement('tr');
                     const noQuestionsCell = document.createElement('td');
-                    noQuestionsCell.setAttribute('colspan', '8'); // Adjusted colspan for the new '提  者IP' column
+                    noQuestionsCell.setAttribute('colspan', '3'); // Adjusted colspan for ID, Title, and Action
                     noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
                     noQuestionsCell.textContent = '暂无题目。';
                     noQuestionsRow.appendChild(noQuestionsCell);
@@ -726,6 +664,65 @@
                     showMessageBox('加载题目列表失败。请检查您的 Cloudflare Worker 是否已部署且 URL 正确。错误详情: ' + error.message);
                 }
             });
+        }
+
+        /**
+         * Displays the full details of a selected question and its actions.
+         * @param {object} question - The full question object.
+         */
+        function showQuestionDetails(question) {
+            console.log('显示题目详情:', question); // Debug log for the question object
+            showSection('questionDetailsSection'); // Switch to the details section
+
+            const detailsContent = document.getElementById('questionDetailsContent');
+            detailsContent.innerHTML = `
+                <p><strong>题目ID:</strong> ${question._id}</p>
+                <p><strong>OJ昵称:</strong> ${question.ojName || 'N/A'}</p>
+                <p><strong>UID:</strong> ${question.uid || 'N/A'}</p>
+                <p><strong>邮箱:</strong> ${question.email || 'N/A'}</p>
+                <p><strong>获奖经历:</strong> ${question.awards || '无'}</p>
+                <p><strong>题目标题:</strong> ${question.questionTitle || 'N/A'}</p>
+                <p><strong>出题人:</strong> ${question.questionAuthor || 'N/A'}</p>
+                <p><strong>难度:</strong> ${getChineseDifficulty(question.questionDifficulty)}</p>
+                <p><strong>状态:</strong> ${getChineseStatus(question.status)}</p>
+                <p><strong>审核意见:</strong> ${question.comment || '无'}</p>
+                <p><strong>提交时间:</strong> ${question.submissionDate ? new Date(question.submissionDate).toLocaleString() : '未知'}</p>
+                <p><strong>提交者IP:</strong> ${question.submitterIp || '未知'}</p>
+                <h3 class="text-xl font-semibold mt-4 mb-2">题目描述:</h3>
+                <div class="border p-4 rounded-md bg-gray-50 overflow-auto max-h-96">
+                    <pre class="whitespace-pre-wrap">${question.questionDescription || '无描述'}</pre>
+                </div>
+            `;
+            console.log('题目详情HTML内容:', detailsContent.innerHTML); // Debug log for the generated HTML
+
+            // Update action buttons in the details section
+            document.getElementById('approveDetailBtn').onclick = async () => {
+                try {
+                    const comment = await showCommentInputModal('请输入通过意见');
+                    approveQuestion(question._id, comment);
+                } catch (error) {
+                    console.log(error.message);
+                }
+            };
+            document.getElementById('rejectDetailBtn').onclick = async () => {
+                try {
+                    const comment = await showCommentInputModal('请输入拒绝意见');
+                    rejectQuestion(question._id, comment);
+                } catch (error) {
+                    console.log(error.message);
+                }
+            };
+            document.getElementById('downloadDescDetailBtn').onclick = () => downloadDescription(question._id, question.questionTitle);
+            document.getElementById('downloadDataDetailBtn').onclick = () => downloadDataPackage(question._id, question.questionTitle);
+
+            // Hide approve/reject buttons if question is not pending
+            if (question.status !== 'pending') {
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.add('hidden');
+            } else {
+                document.getElementById('approveDetailBtn').classList.remove('hidden');
+                document.getElementById('rejectDetailBtn').classList.remove('hidden');
+            }
         }
 
         /**
@@ -819,7 +816,7 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url); // Clean up
-                    showMessageBox('数据包下载成  ！');
+                    showMessageBox('数据包下载成功！');
                 })
                 .catch(error => {
                     console.error('Error downloading data package:', error); // Log the full error object
@@ -861,6 +858,7 @@
             })
             .then(data => {
                 showMessageBox(data.message);
+                showSection('questionsSection'); // Go back to list after action
                 loadQuestions();
             })
             .catch(error => {
@@ -903,6 +901,7 @@
             })
             .then(data => {
                 showMessageBox(data.message);
+                showSection('questionsSection'); // Go back to list after action
                 loadQuestions();
             })
             .catch(error => {
@@ -1028,6 +1027,31 @@
                 showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('confirmCommentBtn').onclick = () => {
+                const comment = document.getElementById('commentInput').value;
+                hideCommentInputModal();
+                if (resolveCommentPromise) {
+                    resolveCommentPromise(comment);
+                }
+            };
+
+            document.getElementById('cancelCommentBtn').onclick = () => {
+                hideCommentInputModal();
+                if (rejectCommentPromise) {
+                    rejectCommentPromise(new Error('Comment input cancelled.'));
+                }
+            };
+
+            // Add event listeners for sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    showSection(sectionId);
+                });
+            });
+        });
     </script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
 </body>
