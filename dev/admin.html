@@ -103,7 +103,7 @@
 <body class="font-sans bg-gray-100 p-4 sm:p-6 md:p-8">
     <div class="container mx-auto p-6 bg-white rounded-lg shadow-xl max-w-4xl">
         <h1 class="text-3xl font-bold text-center mb-4 text-gray-800">C++ Coding组题目审核后台</h1>
-        <p class="text-center text-gray-600 mb-8">管理员可   在这里审核提交的题目。</p>
+        <p class="text-center text-gray-600 mb-8">管理员可以在这里审核提交的题目。</p>
 
         <!-- 管理员登录表单 -->
         <h2 id="loginTitle" class="text-2xl font-semibold text-center mb-6 text-gray-700">管理员登录</h2>
@@ -186,12 +186,12 @@
                         <button id="approveDetailBtn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
-                            通过
+                            通过 (快捷键: 1)
                         </button>
                         <button id="rejectDetailBtn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
-                            拒绝
+                            拒绝 (快捷键: 2)
                         </button>
                         <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
@@ -648,9 +648,11 @@
                     const noQuestionsCell = document.createElement('td');
                     noQuestionsCell.setAttribute('colspan', '3'); // Adjusted colspan for ID, Title, and Action
                     noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
-                    noQuestionsCell.textContent = '暂无题目。';
+                    noQuestionsCell.innerHTML = '太棒了！所有待审核题目已处理完毕。感谢您的辛勤工作！'; // Encouraging message
                     noQuestionsRow.appendChild(noQuestionsCell);
                     questionsTable.appendChild(noQuestionsRow);
+                    // Optionally, hide the question details section if it's currently shown
+                    showSection('questionsSection'); // Ensure we are on the questions list view
                 }
             })
             .catch(error => {
@@ -858,8 +860,14 @@
             })
             .then(data => {
                 showMessageBox(data.message);
-                showSection('questionsSection'); // Go back to list after action
+                // After approving, try to load the next pending question
+                // If no more pending questions, loadQuestions will show the encouraging message
                 loadQuestions();
+                // If question details section is still open, hide it to show the list
+                const questionDetailsSection = document.getElementById('questionDetailsSection');
+                if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                    showSection('questionsSection');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -901,8 +909,14 @@
             })
             .then(data => {
                 showMessageBox(data.message);
-                showSection('questionsSection'); // Go back to list after action
+                // After rejecting, try to load the next pending question
+                // If no more pending questions, loadQuestions will show the encouraging message
                 loadQuestions();
+                // If question details section is still open, hide it to show the list
+                const questionDetailsSection = document.getElementById('questionDetailsSection');
+                if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                    showSection('questionsSection');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -1051,6 +1065,27 @@
                     showSection(sectionId);
                 });
             });
+        });
+
+        // Keyboard shortcuts for review actions
+        document.addEventListener('keydown', (event) => {
+            const questionDetailsSection = document.getElementById('questionDetailsSection');
+            // Only enable shortcuts if the question details section is visible
+            if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                if (event.key === '1') {
+                    event.preventDefault(); // Prevent default action (e.g., typing '1' in an input field)
+                    const approveBtn = document.getElementById('approveDetailBtn');
+                    if (approveBtn && !approveBtn.classList.contains('hidden')) {
+                        approveBtn.click();
+                    }
+                } else if (event.key === '2') {
+                    event.preventDefault(); // Prevent default action
+                    const rejectBtn = document.getElementById('rejectDetailBtn');
+                    if (rejectBtn && !rejectBtn.classList.contains('hidden')) {
+                        rejectBtn.click();
+                    }
+                }
+            }
         });
     </script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
