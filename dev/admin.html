@@ -635,8 +635,6 @@
                 const element = document.getElementById(id);
                 if (element) { // Check if element exists before trying to access classList
                     element.classList.add('hidden');
-                } else {
-                    console.warn(`Element with ID '${id}' not found when trying to hide.`);
                 }
             });
 
@@ -1180,4 +1178,124 @@
             try {
                 const response = await fetch(fetchURL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'a
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip: ip }),
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    document.getElementById('ipInput').value = ''; // Clear input
+                    loadBlacklistedIps(); // Refresh the list
+                } else {
+                    showMessageBox(data.message || '从黑名单移除失败。');
+                }
+            } catch (error) {
+                console.error('Error removing IP from blacklist:', error);
+                showMessageBox('从黑名单移除失败。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Loads the list of blacklisted IPs from the backend and displays them.
+         */
+        async function loadBlacklistedIps() {
+            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
+                console.error('WORKER_BASE_URL is not set for blacklist functions.');
+                return;
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ips`;
+            try {
+                const response = await fetch(fetchURL, {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // If not authorized, don't show an error, just don't load the list
+                        console.warn('Not authorized to load blacklisted IPs. Session might have expired.');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const blacklistedIpsList = document.getElementById('blacklistedIpsList');
+                blacklistedIpsList.innerHTML = ''; // Clear current list
+
+                if (data.ips && data.ips.length > 0) {
+                    data.ips.forEach(ip => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('py-2', 'px-4', 'flex', 'justify-between', 'items-center');
+                        listItem.textContent = ip;
+
+                        const removeButton = document.createElement('button');
+                        removeButton.textContent = '移除';
+                        removeButton.classList.add('ml-4', 'px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'focus:outline-none');
+                        removeButton.onclick = async () => {
+                            document.getElementById('ipInput').value = ip; // Populate input for easy removal
+                            await removeIpFromBlacklist();
+                        };
+                        listItem.appendChild(removeButton);
+                        blacklistedIpsList.appendChild(listItem);
+                    });
+                } else {
+                    const noIpItem = document.createElement('li');
+                    noIpItem.classList.add('py-2', 'text-center', 'text-gray-500');
+                    noIpItem.textContent = '暂无黑名单IP。';
+                    blacklistedIpsList.appendChild(noIpItem);
+                }
+            } catch (error) {
+                console.error('Error loading blacklisted IPs:', error);
+                showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('confirmCommentBtn').onclick = () => {
+                const comment = document.getElementById('commentInput').value;
+                hideCommentInputModal();
+                if (resolveCommentPromise) {
+                    resolveCommentPromise(comment);
+                }
+            };
+
+            document.getElementById('cancelCommentBtn').onclick = () => {
+                hideCommentInputModal();
+                if (rejectCommentPromise) {
+                    rejectCommentPromise(new Error('Comment input cancelled.'));
+                }
+            };
+
+            // Add event listeners for sidebar navigation
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.dataset.section;
+                    showSection(sectionId);
+                });
+            });
+        });
+
+        // Keyboard shortcuts for review actions
+        document.addEventListener('keydown', (event) => {
+            const questionDetailsSection = document.getElementById('questionDetailsSection');
+            // Only enable shortcuts if the question details section is visible
+            if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                if (event.key === '1') {
+                    event.preventDefault(); // Prevent default action (e.g., typing '1' in an input field)
+                    const approveBtn = document.getElementById('approveDetailBtn');
+                    if (approveBtn && !approveBtn.classList.contains('hidden')) {
+                        approveBtn.click();
+                    }
+                } else if (event.key === '2') {
+                    event.preventDefault(); // Prevent default action
+                    const rejectBtn = document.getElementById('rejectDetailBtn');
+                    if (rejectBtn && !rejectBtn.classList.contains('hidden')) {
+                        rejectBtn.click();
+                    }
+                }
+            }
+        });
+    </script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
+</body>
+</html>
