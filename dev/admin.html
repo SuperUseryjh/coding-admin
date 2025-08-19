@@ -134,7 +134,8 @@
             <nav class="w-full md:w-1/4 bg-gray-50 p-4 rounded-lg shadow-sm">
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">导航</h3>
                 <ul>
-                    <li class="sidebar-nav-item active" data-section="questionsSection">题目列表</li>
+                    <li class="sidebar-nav-item active" data-section="statisticsSection">审核概览</li>
+                    <li class="sidebar-nav-item" data-section="questionsSection">题目列表</li>
                     <li class="sidebar-nav-item" data-section="ipBlacklistSection">IP 黑名单管理</li>
                     <li class="sidebar-nav-item" data-section="changePasswordSection">修改管理员密码</li>
                 </ul>
@@ -142,22 +143,24 @@
 
             <!-- 右侧内容区域 -->
             <div class="w-full md:w-3/4 bg-white p-0 rounded-lg shadow-none">
-                <!-- New Statistics Panel -->
-                <div id="statisticsPanel" class="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm bg-blue-50">
-                    <h3 class="text-xl font-semibold text-center mb-4 text-gray-800">审核概览</h3>
-                    <div class="flex justify-around text-center">
-                        <div>
-                            <p class="text-gray-600">待审核题目</p>
-                            <p id="pendingCount" class="text-2xl font-bold text-blue-700">0</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600">已打回占比</p>
-                            <p id="rejectedRatio" class="text-2xl font-bold text-red-700">0.00%</p>
+                <!-- Statistics Section -->
+                <div id="statisticsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">审核概览</h2>
+                    <div id="statisticsPanel" class="bg-blue-50 p-6 rounded-lg">
+                        <div class="flex justify-around text-center">
+                            <div>
+                                <p class="text-gray-600">待审核题目</p>
+                                <p id="pendingCount" class="text-2xl font-bold text-blue-700">0</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">已打回占比</p>
+                                <p id="rejectedRatio" class="text-2xl font-bold text-red-700">0.00%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <!-- 题目列表部分 -->
-                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+                <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm hidden">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
                     <div class="flex justify-center mb-4 space-x-4">
                         <select id="statusFilter" onchange="loadQuestions()"
@@ -495,7 +498,7 @@
          */
         function showSection(sectionId) {
             // Hide all content sections safely
-            const sections = ['questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection'];
+            const sections = ['statisticsSection', 'questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection']; // Added statisticsSection
             sections.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) { // Check if element exists before trying to access classList
@@ -523,7 +526,9 @@
             }
 
             // Load data specific to the section if needed
-            if (sectionId === 'questionsSection') {
+            if (sectionId === 'statisticsSection') { // New condition for statistics
+                fetchQuestionCounts();
+            } else if (sectionId === 'questionsSection') {
                 loadQuestions();
             } else if (sectionId === 'ipBlacklistSection') {
                 loadBlacklistedIps(); // Load IPs when IP Blacklist section is shown
@@ -564,8 +569,8 @@
                     document.getElementById('loginForm').classList.add('hidden'); // Hide login form
                     document.getElementById('loginTitle').classList.add('hidden'); // Hide login title
                     document.getElementById('adminPanel').classList.remove('hidden'); // Show admin panel
-                    showSection('questionsSection'); // Show questions section by default after login
-                    fetchQuestionCounts(); // Fetch and display statistics after login
+                    showSection('statisticsSection'); // Show statistics section by default after login
+                    // fetchQuestionCounts() is now called by showSection('statisticsSection')
                 } else {
                     showMessageBox(data.message || '登录失败，请检查邮箱和密码   ');
                 }
@@ -724,8 +729,6 @@
                     noQuestionsCell.innerHTML = '太棒了！所有待审核题目已处理完毕。感谢您的辛勤工作！'; // Encouraging message
                     noQuestionsRow.appendChild(noQuestionsCell);
                     questionsTable.appendChild(noQuestionsRow);
-                    // Optionally, hide the question details section if it's currently shown
-                    showSection('questionsSection'); // Ensure we are on the questions list view
                 }
             })
             .catch(error => {
