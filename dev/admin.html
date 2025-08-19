@@ -7,6 +7,8 @@
     <link rel="icon" href="https://mr-onion-blog.fun/img/avatar.png" type="image/png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -147,15 +149,21 @@
                 <div id="statisticsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">审核概览</h2>
                     <div id="statisticsPanel" class="bg-blue-50 p-6 rounded-lg">
-                        <div class="flex justify-around text-center">
+                        <div class="flex justify-around text-center mb-8"> <!-- Added mb-8 for spacing -->
                             <div>
                                 <p class="text-gray-600">待审核题目</p>
                                 <p id="pendingCount" class="text-2xl font-bold text-blue-700">0</p>
                             </div>
-                            <div>
-                                <p class="text-gray-600">已打回占比</p>
-                                <p id="rejectedRatio" class="text-2xl font-bold text-red-700">0.00%</p>
+                            <div class="relative w-32 h-32">
+                                <canvas id="rejectedRatioChart"></canvas>
+                                <div id="rejectedRatioText" class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-red-700">
+                                    0.00%
+                                </div>
                             </div>
+                        </div>
+                        <h4 class="text-xl font-semibold text-center mb-4 text-gray-800">近几日提交趋势</h4>
+                        <div class="relative h-64"> <!-- Added fixed height for chart -->
+                            <canvas id="submissionTrendChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -334,6 +342,8 @@
         // IMPORTANT: Replace this with the actual base URL of your Cloudflare Worker.
         // Example: const WORKER_BASE_URL = "https://your-worker-name.your-username.workers.dev";
         const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+        let rejectedRatioChartInstance = null; // Global variable for Chart.js instance
+        let submissionTrendChartInstance = null; // Global variable for submission trend Chart.js instance
 
         /**
          * Calculates the SHA-256 hash of a given string.
@@ -404,7 +414,7 @@
 
             // Display loading state
             document.getElementById('pendingCount').textContent = '加载中...';
-            document.getElementById('rejectedRatio').textContent = '加载中...';
+            document.getElementById('rejectedRatioText').textContent = '加载中...'; // Update the text div
 
             const fetchURL = `${WORKER_BASE_URL}/admin/questions?status=all`; // Fetch all questions
             console.log('Fetching all questions for statistics from:', fetchURL);
@@ -418,7 +428,7 @@
                     if (response.status === 401) {
                         console.warn('Not authorized to load question counts. Session might have expired.');
                         document.getElementById('pendingCount').textContent = '未授权';
-                        document.getElementById('rejectedRatio').textContent = '未授权';
+                        document.getElementById('rejectedRatioText').textContent = '未授权';
                         return;
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -439,15 +449,130 @@
                     }
                 });
 
+                const approvedOrPendingCount = totalCount - rejectedCount; // Count of non-rejected questions
+
                 const rejectedRatio = totalCount > 0 ? (rejectedCount / totalCount * 100).toFixed(2) : '0.00';
 
                 document.getElementById('pendingCount').textContent = pendingCount;
-                document.getElementById('rejectedRatio').textContent = `${rejectedRatio}%`;
+                document.getElementById('rejectedRatioText').textContent = `${rejectedRatio}%`; // Update the text div
+
+                // Chart.js Donut Chart
+                const ctxRejected = document.getElementById('rejectedRatioChart').getContext('2d');
+
+                if (rejectedRatioChartInstance) {
+                    rejectedRatioChartInstance.destroy(); // Destroy existing chart instance
+                }
+
+                rejectedRatioChartInstance = new Chart(ctxRejected, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['已打回', '其他'],
+                        datasets: [{
+                            data: [rejectedCount, approvedOrPendingCount],
+                            backgroundColor: ['#EF4444', '#3B82F6'], // red-500, blue-500
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '80%', // Makes it a donut chart
+                        plugins: {
+                            legend: {
+                                display: false // Hide legend
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : '0.00';
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Submission Trend Line Chart
+                const submissionCounts = {};
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Get data for the last 7 days (today + 6 previous days)
+
+                allQuestions.forEach(q => {
+                    if (q.submissionDate) {
+                        const submissionDate = new Date(q.submissionDate);
+                        // Only count submissions within the last 7 days
+                        if (submissionDate >= sevenDaysAgo) {
+                            const dateString = submissionDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                            submissionCounts[dateString] = (submissionCounts[dateString] || 0) + 1;
+                        }
+                    }
+                });
+
+                const labels = [];
+                const dataPoints = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (6 - i)); // Iterate from 6 days ago to today
+                    const dateString = date.toISOString().split('T')[0];
+                    labels.push(date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })); // Format for display
+                    dataPoints.push(submissionCounts[dateString] || 0);
+                }
+
+                const ctxTrend = document.getElementById('submissionTrendChart').getContext('2d');
+
+                if (submissionTrendChartInstance) {
+                    submissionTrendChartInstance.destroy(); // Destroy existing chart instance
+                }
+
+                submissionTrendChartInstance = new Chart(ctxTrend, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '每日提交数量',
+                            data: dataPoints,
+                            borderColor: '#4F46E5', // indigo-600
+                            backgroundColor: 'rgba(79, 70, 229, 0.2)', // indigo-600 with transparency
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0 // Ensure integer ticks for counts
+                                }
+                            }
+                        }
+                    }
+                });
 
             } catch (error) {
                 console.error('Error fetching question counts:', error);
                 document.getElementById('pendingCount').textContent = '加载失败';
-                document.getElementById('rejectedRatio').textContent = '加载失败';
+                document.getElementById('rejectedRatioText').textContent = '加载失败';
+                if (rejectedRatioChartInstance) {
+                    rejectedRatioChartInstance.destroy(); // Destroy chart on error
+                    rejectedRatioChartInstance = null;
+                }
+                if (submissionTrendChartInstance) { // Destroy trend chart on error
+                    submissionTrendChartInstance.destroy();
+                    submissionTrendChartInstance = null;
+                }
+                // Optionally, draw a placeholder chart or clear canvas
             }
         }
 
@@ -1055,124 +1180,4 @@
             try {
                 const response = await fetch(fetchURL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ip: ip }),
-                    credentials: 'include'
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    showMessageBox(data.message);
-                    document.getElementById('ipInput').value = ''; // Clear input
-                    loadBlacklistedIps(); // Refresh the list
-                } else {
-                    showMessageBox(data.message || '从黑名单移除失败。');
-                }
-            } catch (error) {
-                console.error('Error removing IP from blacklist:', error);
-                showMessageBox('从黑名单移除失败。错误详情: ' + error.message);
-            }
-        }
-
-        /**
-         * Loads the list of blacklisted IPs from the backend and displays them.
-         */
-        async function loadBlacklistedIps() {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                console.error('WORKER_BASE_URL is not set for blacklist functions.');
-                return;
-            }
-
-            const fetchURL = `${WORKER_BASE_URL}/admin/blacklist-ips`;
-            try {
-                const response = await fetch(fetchURL, {
-                    credentials: 'include'
-                });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        // If not authorized, don't show an error, just don't load the list
-                        console.warn('Not authorized to load blacklisted IPs. Session might have expired.');
-                        return;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                const blacklistedIpsList = document.getElementById('blacklistedIpsList');
-                blacklistedIpsList.innerHTML = ''; // Clear current list
-
-                if (data.ips && data.ips.length > 0) {
-                    data.ips.forEach(ip => {
-                        const listItem = document.createElement('li');
-                        listItem.classList.add('py-2', 'px-4', 'flex', 'justify-between', 'items-center');
-                        listItem.textContent = ip;
-
-                        const removeButton = document.createElement('button');
-                        removeButton.textContent = '移除';
-                        removeButton.classList.add('ml-4', 'px-3', 'py-1', 'bg-red-500', 'text-white', 'rounded-md', 'hover:bg-red-600', 'focus:outline-none');
-                        removeButton.onclick = async () => {
-                            document.getElementById('ipInput').value = ip; // Populate input for easy removal
-                            await removeIpFromBlacklist();
-                        };
-                        listItem.appendChild(removeButton);
-                        blacklistedIpsList.appendChild(listItem);
-                    });
-                } else {
-                    const noIpItem = document.createElement('li');
-                    noIpItem.classList.add('py-2', 'text-center', 'text-gray-500');
-                    noIpItem.textContent = '暂无黑名单IP。';
-                    blacklistedIpsList.appendChild(noIpItem);
-                }
-            } catch (error) {
-                console.error('Error loading blacklisted IPs:', error);
-                showMessageBox('加载黑名单IP失败。错误详情: ' + error.message);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('confirmCommentBtn').onclick = () => {
-                const comment = document.getElementById('commentInput').value;
-                hideCommentInputModal();
-                if (resolveCommentPromise) {
-                    resolveCommentPromise(comment);
-                }
-            };
-
-            document.getElementById('cancelCommentBtn').onclick = () => {
-                hideCommentInputModal();
-                if (rejectCommentPromise) {
-                    rejectCommentPromise(new Error('Comment input cancelled.'));
-                }
-            };
-
-            // Add event listeners for sidebar navigation
-            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const sectionId = this.dataset.section;
-                    showSection(sectionId);
-                });
-            });
-        });
-
-        // Keyboard shortcuts for review actions
-        document.addEventListener('keydown', (event) => {
-            const questionDetailsSection = document.getElementById('questionDetailsSection');
-            // Only enable shortcuts if the question details section is visible
-            if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
-                if (event.key === '1') {
-                    event.preventDefault(); // Prevent default action (e.g., typing '1' in an input field)
-                    const approveBtn = document.getElementById('approveDetailBtn');
-                    if (approveBtn && !approveBtn.classList.contains('hidden')) {
-                        approveBtn.click();
-                    }
-                } else if (event.key === '2') {
-                    event.preventDefault(); // Prevent default action
-                    const rejectBtn = document.getElementById('rejectDetailBtn');
-                    if (rejectBtn && !rejectBtn.classList.contains('hidden')) {
-                        rejectBtn.click();
-                    }
-                }
-            }
-        });
-    </script>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
-</body>
-</html>
+                    headers: { 'Content-Type': 'a
