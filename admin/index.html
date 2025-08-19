@@ -142,20 +142,6 @@
 
             <!-- 右侧内容区域 -->
             <div class="w-full md:w-3/4 bg-white p-0 rounded-lg shadow-none">
-                <!-- New Statistics Panel -->
-                <div id="statisticsPanel" class="mb-8 p-6 border border-gray-200 rounded-lg shadow-sm bg-blue-50">
-                    <h3 class="text-xl font-semibold text-center mb-4 text-gray-800">审核概览</h3>
-                    <div class="flex justify-around text-center">
-                        <div>
-                            <p class="text-gray-600">待审核题目</p>
-                            <p id="pendingCount" class="text-2xl font-bold text-blue-700">0</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-600">已打回占比</p>
-                            <p id="rejectedRatio" class="text-2xl font-bold text-red-700">0.00%</p>
-                        </div>
-                    </div>
-                </div>
                 <!-- 题目列表部分 -->
                 <div id="questionsSection" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
                     <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
@@ -200,12 +186,12 @@
                         <button id="approveDetailBtn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
-                            通过 (快捷键: 1)
+                            通过
                         </button>
                         <button id="rejectDetailBtn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
-                            拒绝 (快捷键: 2)
+                            拒绝
                         </button>
                         <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
@@ -391,57 +377,6 @@
         }
 
         /**
-         * Fetches all questions and updates the statistics panel.
-         */
-        async function fetchQuestionCounts() {
-            if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
-                console.error('WORKER_BASE_URL is not set for statistics functions.');
-                return;
-            }
-
-            const fetchURL = `${WORKER_BASE_URL}/admin/questions?status=all`; // Fetch all questions
-            console.log('Fetching all questions for statistics from:', fetchURL);
-
-            try {
-                const response = await fetch(fetchURL, {
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        console.warn('Not authorized to load question counts. Session might have expired.');
-                        return;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                const allQuestions = data.questions || [];
-
-                let pendingCount = 0;
-                let rejectedCount = 0;
-                let totalCount = allQuestions.length;
-
-                allQuestions.forEach(q => {
-                    if (q.status === 'pending') {
-                        pendingCount++;
-                    } else if (q.status === 'rejected') {
-                        rejectedCount++;
-                    }
-                });
-
-                const rejectedRatio = totalCount > 0 ? (rejectedCount / totalCount * 100).toFixed(2) : '0.00';
-
-                document.getElementById('pendingCount').textContent = pendingCount;
-                document.getElementById('rejectedRatio').textContent = `${rejectedRatio}%`;
-
-            } catch (error) {
-                console.error('Error fetching question counts:', error);
-                // Optionally show a message box, but for background stats, console error might be enough
-            }
-        }
-
-        /**
          * Displays a custom message box instead of the browser's alert.
          * @param {string} message - The message to display.
          */
@@ -565,7 +500,6 @@
                     document.getElementById('loginTitle').classList.add('hidden'); // Hide login title
                     document.getElementById('adminPanel').classList.remove('hidden'); // Show admin panel
                     showSection('questionsSection'); // Show questions section by default after login
-                    fetchQuestionCounts(); // Fetch and display statistics after login
                 } else {
                     showMessageBox(data.message || '登录失败，请检查邮箱和密码   ');
                 }
@@ -679,13 +613,6 @@
                 const questionsTable = document.getElementById('questionsTable');
                 questionsTable.innerHTML = ''; // Clear table content
 
-                const countValueSpan = document.getElementById('countValue');
-                if (statusFilter === 'pending' && countValueSpan) {
-                    countValueSpan.textContent = data.questions ? data.questions.length : 0;
-                } else if (countValueSpan) {
-                    countValueSpan.textContent = 'N/A'; // Or hide it, or show total count
-                }
-
                 if (data.questions && data.questions.length > 0) {
                     data.questions.forEach(question => {
                         const row = document.createElement('tr');
@@ -721,11 +648,9 @@
                     const noQuestionsCell = document.createElement('td');
                     noQuestionsCell.setAttribute('colspan', '3'); // Adjusted colspan for ID, Title, and Action
                     noQuestionsCell.classList.add('px-4', 'py-4', 'text-center', 'text-gray-500');
-                    noQuestionsCell.innerHTML = '太棒了！所有待审核题目已处理完毕。感谢您的辛勤工作！'; // Encouraging message
+                    noQuestionsCell.textContent = '暂无题目。';
                     noQuestionsRow.appendChild(noQuestionsCell);
                     questionsTable.appendChild(noQuestionsRow);
-                    // Optionally, hide the question details section if it's currently shown
-                    showSection('questionsSection'); // Ensure we are on the questions list view
                 }
             })
             .catch(error => {
@@ -933,15 +858,8 @@
             })
             .then(data => {
                 showMessageBox(data.message);
-                // After approving, try to load the next pending question
-                // If no more pending questions, loadQuestions will show the encouraging message
+                showSection('questionsSection'); // Go back to list after action
                 loadQuestions();
-                fetchQuestionCounts(); // Update statistics after approval
-                // If question details section is still open, hide it to show the list
-                const questionDetailsSection = document.getElementById('questionDetailsSection');
-                if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
-                    showSection('questionsSection');
-                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -983,15 +901,8 @@
             })
             .then(data => {
                 showMessageBox(data.message);
-                // After rejecting, try to load the next pending question
-                // If no more pending questions, loadQuestions will show the encouraging message
+                showSection('questionsSection'); // Go back to list after action
                 loadQuestions();
-                fetchQuestionCounts(); // Update statistics after rejection
-                // If question details section is still open, hide it to show the list
-                const questionDetailsSection = document.getElementById('questionDetailsSection');
-                if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
-                    showSection('questionsSection');
-                }
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -1140,27 +1051,6 @@
                     showSection(sectionId);
                 });
             });
-        });
-
-        // Keyboard shortcuts for review actions
-        document.addEventListener('keydown', (event) => {
-            const questionDetailsSection = document.getElementById('questionDetailsSection');
-            // Only enable shortcuts if the question details section is visible
-            if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
-                if (event.key === '1') {
-                    event.preventDefault(); // Prevent default action (e.g., typing '1' in an input field)
-                    const approveBtn = document.getElementById('approveDetailBtn');
-                    if (approveBtn && !approveBtn.classList.contains('hidden')) {
-                        approveBtn.click();
-                    }
-                } else if (event.key === '2') {
-                    event.preventDefault(); // Prevent default action
-                    const rejectBtn = document.getElementById('rejectDetailBtn');
-                    if (rejectBtn && !rejectBtn.classList.contains('hidden')) {
-                        rejectBtn.click();
-                    }
-                }
-            }
         });
     </script>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" xintegrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"95f977345973792b","version":"2025.6.2","r":1,"token":"1baba919fe1547d6a26d614087b4f72a","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}}}' crossorigin="anonymous"></script>
