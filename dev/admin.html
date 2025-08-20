@@ -1154,8 +1154,8 @@
          * @param {string} questionId - The ID of the question to delete.
          */
         async function deleteQuestion(questionId) {
-            if (WORKER_BASE_URL === "https://codingapi.mr-onion-blog.fun" || !WORKER_BASE_URL) {
-                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+            if (!WORKER_BASE_URL) {
+                showMessageBox('错误：WORKER_BASE_URL 未设置。请在代码中设置您的 Cloudflare Worker URL。');
                 console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
                 return;
             }
