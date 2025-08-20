@@ -176,6 +176,7 @@
                             <option value="pending">待审核</option>
                             <option value="approved">已通过</option>
                             <option value="rejected">已拒绝</option>
+                            <option value="deleted">已删除</option>
                             <option value="all">所有题目</option>
                         </select>
                     </div>
@@ -217,6 +218,11 @@
                                        hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
                             拒绝 (快捷键: 2)
+                        </button>
+                        <button id="deleteDetailBtn" class="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2
+                                       transition duration-150 ease-in-out hidden">
+                            删除 (仅限已拒绝题目)
                         </button>
                         <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
@@ -923,13 +929,23 @@
             document.getElementById('downloadDescDetailBtn').onclick = () => downloadDescription(question._id, question.questionTitle);
             document.getElementById('downloadDataDetailBtn').onclick = () => downloadDataPackage(question._id, question.questionTitle);
 
-            // Hide approve/reject buttons if question is not pending
-            if (question.status !== 'pending') {
-                document.getElementById('approveDetailBtn').classList.add('hidden');
-                document.getElementById('rejectDetailBtn').classList.add('hidden');
-            } else {
+            // New: Delete button functionality
+            const deleteBtn = document.getElementById('deleteDetailBtn');
+            deleteBtn.onclick = () => deleteQuestion(question._id);
+
+            // Hide approve/reject/delete buttons based on question status
+            if (question.status === 'pending') {
                 document.getElementById('approveDetailBtn').classList.remove('hidden');
                 document.getElementById('rejectDetailBtn').classList.remove('hidden');
+                deleteBtn.classList.add('hidden'); // Hide delete for pending
+            } else if (question.status === 'rejected') {
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.remove('hidden'); // Keep reject visible if needed, or hide
+                deleteBtn.classList.remove('hidden'); // Show delete for rejected
+            } else { // approved or deleted
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.add('hidden');
+                deleteBtn.classList.add('hidden'); // Hide delete for approved/deleted
             }
         }
 
@@ -1130,6 +1146,53 @@
                 console.error('Error:', error);
                 showMessageBox('拒绝审核失败。错误详情: ' + error.message);
             });
+        }
+
+        /**
+         * Soft-deletes a question by sending a POST request to the backend.
+         * Clears sensitive data and sets status to 'deleted'.
+         * @param {string} questionId - The ID of the question to delete.
+         */
+        async function deleteQuestion(questionId) {
+            if (WORKER_BASE_URL === "https://codingapi.mr-onion-blog.fun" || !WORKER_BASE_URL) {
+                showMessageBox('错误：请在代码中设置 WORKER_BASE_URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const confirmDelete = confirm('确定要删除此题目吗？删除后题目内容将被清空，仅保留ID和状态。此操作不可逆！');
+            if (!confirmDelete) {
+                return; // User cancelled
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/soft-delete/${questionId}`;
+            console.log('Soft-deleting question at:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Crucial for sending cookies with this request
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    loadQuestions(); // Refresh the question list
+                    fetchQuestionCounts(); // Update statistics
+                    // If question details section is still open, hide it to show the list
+                    const questionDetailsSection = document.getElementById('questionDetailsSection');
+                    if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                        showSection('questionsSection');
+                    }
+                } else {
+                    showMessageBox(data.message || '删除题目失败。');
+                }
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                showMessageBox('删除题目过程中发生错误。错误详情: ' + error.message);
+            }
         }
 
         /**
