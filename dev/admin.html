@@ -940,7 +940,7 @@
                 deleteBtn.classList.add('hidden'); // Hide delete for pending
             } else if (question.status === 'rejected') {
                 document.getElementById('approveDetailBtn').classList.add('hidden');
-                document.getElementById('rejectDetailBtn').classList.remove('hidden'); // Keep reject visible if needed, or hide
+                document.getElementById('rejectDetailBtn').classList.add('hidden'); // Hide reject for rejected
                 deleteBtn.classList.remove('hidden'); // Show delete for rejected
             } else { // approved or deleted
                 document.getElementById('approveDetailBtn').classList.add('hidden');
