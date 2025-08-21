@@ -166,6 +166,15 @@
                         <div class="relative h-64"> <!-- Added fixed height for chart -->
                             <canvas id="submissionTrendChart"></canvas>
                         </div>
+
+                        <!-- NEW: Suspicious IP Alerts Section -->
+                        <div id="suspiciousIpAlerts" class="mt-8 p-4 bg-red-100 border border-red-300 rounded-lg hidden">
+                            <h4 class="text-xl font-semibold text-red-800 mb-4">可疑 IP 提交告警</h4>
+                            <ul id="suspiciousIpList" class="divide-y divide-red-200">
+                                <!-- Suspicious IPs will be loaded here -->
+                            </ul>
+                            <p id="noSuspiciousIpsMessage" class="text-red-700 text-center mt-4 hidden">暂无可疑 IP。</p>
+                        </div>
                     </div>
                 </div>
                 <!-- 题目列表部分 -->
@@ -688,6 +697,7 @@
             // Load data specific to the section if needed
             if (sectionId === 'statisticsSection') { // New condition for statistics
                 fetchQuestionCounts();
+                fetchSuspiciousIps(); // NEW: Fetch suspicious IPs when statistics section is shown
             } else if (sectionId === 'questionsSection') {
                 loadQuestions();
             } else if (sectionId === 'ipBlacklistSection') {
@@ -804,6 +814,79 @@
                 console.error('Change password error:', error);
                 showMessageBox('修改密码过程中发生错误。错误详情: ' + error.message);
             }
+        }
+
+        /**
+         * Fetches suspicious IP addresses (those with high submission counts) and displays them.
+         */
+        async function fetchSuspiciousIps() {
+            if (!WORKER_BASE_URL) {
+                console.error('WORKER_BASE_URL is not set for suspicious IP functions.');
+                return;
+            }
+
+            const suspiciousIpAlertsDiv = document.getElementById('suspiciousIpAlerts');
+            const suspiciousIpListUl = document.getElementById('suspiciousIpList');
+            const noSuspiciousIpsMessageP = document.getElementById('noSuspiciousIpsMessage');
+
+            suspiciousIpListUl.innerHTML = ''; // Clear previous list
+            suspiciousIpAlertsDiv.classList.add('hidden'); // Hide by default
+            noSuspiciousIpsMessageP.classList.add('hidden'); // Hide message by default
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/suspicious-ips`;
+            console.log('Fetching suspicious IPs from:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.warn('Not authorized to load suspicious IPs. Session might have expired.');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const suspiciousIps = data.ips || [];
+
+                if (suspiciousIps.length > 0) {
+                    suspiciousIpAlertsDiv.classList.remove('hidden');
+                    suspiciousIps.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('py-2', 'flex', 'justify-between', 'items-center');
+                        listItem.innerHTML = `
+                            <span>IP: <strong>${item.ip}</strong> (提交次数: ${item.count})</span>
+                            <button class="ml-4 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none"
+                                    onclick="addIpToBlacklistFromAlert('${item.ip}')">
+                                加入黑名单
+                            </button>
+                        `;
+                        suspiciousIpListUl.appendChild(listItem);
+                    });
+                } else {
+                    suspiciousIpAlertsDiv.classList.remove('hidden'); // Still show the section
+                    noSuspiciousIpsMessageP.classList.remove('hidden'); // Show "no suspicious IPs" message
+                }
+
+            } catch (error) {
+                console.error('Error fetching suspicious IPs:', error);
+                suspiciousIpAlertsDiv.classList.remove('hidden');
+                noSuspiciousIpsMessageP.classList.remove('hidden');
+                noSuspiciousIpsMessageP.textContent = `加载可疑 IP 失败: ${error.message}`;
+            }
+        }
+
+        /**
+         * Helper function to add an IP to blacklist directly from the alert.
+         * @param {string} ip - The IP address to blacklist.
+         */
+        async function addIpToBlacklistFromAlert(ip) {
+            document.getElementById('ipInput').value = ip; // Populate the IP input field
+            await addIpToBlacklist(); // Use the existing addIpToBlacklist function
+            fetchSuspiciousIps(); // Refresh suspicious IPs after blacklisting
         }
 
         /**
