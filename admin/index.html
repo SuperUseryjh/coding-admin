@@ -140,6 +140,7 @@
                     <li class="sidebar-nav-item" data-section="questionsSection">题目列表</li>
                     <li class="sidebar-nav-item" data-section="ipBlacklistSection">IP 黑名单管理</li>
                     <li class="sidebar-nav-item" data-section="changePasswordSection">修改管理员密码</li>
+                    <li class="sidebar-nav-item" data-section="batchAddQuestionsSection">批量增加题目</li>
                 </ul>
             </nav>
 
@@ -165,6 +166,15 @@
                         <div class="relative h-64"> <!-- Added fixed height for chart -->
                             <canvas id="submissionTrendChart"></canvas>
                         </div>
+
+                        <!-- NEW: Suspicious IP Alerts Section -->
+                        <div id="suspiciousIpAlerts" class="mt-8 p-4 bg-red-100 border border-red-300 rounded-lg hidden">
+                            <h4 class="text-xl font-semibold text-red-800 mb-4">可疑 IP 提交告警</h4>
+                            <ul id="suspiciousIpList" class="divide-y divide-red-200">
+                                <!-- Suspicious IPs will be loaded here -->
+                            </ul>
+                            <p id="noSuspiciousIpsMessage" class="text-red-700 text-center mt-4 hidden">暂无可疑 IP。</p>
+                        </div>
                     </div>
                 </div>
                 <!-- 题目列表部分 -->
@@ -176,6 +186,7 @@
                             <option value="pending">待审核</option>
                             <option value="approved">已通过</option>
                             <option value="rejected">已拒绝</option>
+                            <option value="deleted">已删除</option>
                             <option value="all">所有题目</option>
                         </select>
                     </div>
@@ -218,6 +229,11 @@
                                        transition duration-150 ease-in-out">
                             拒绝 (快捷键: 2)
                         </button>
+                        <button id="deleteDetailBtn" class="px-6 py-2 bg-gray-800 text-white font-semibold rounded-md shadow-md
+                                       hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2
+                                       transition duration-150 ease-in-out hidden">
+                            删除 (仅限已拒绝题目)
+                        </button>
                         <button id="downloadDescDetailBtn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-md
                                        hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
                                        transition duration-150 ease-in-out">
@@ -245,7 +261,7 @@
                                     class="px-6 py-2 bg-red-600 text-white font-semibold rounded-md shadow-md
                                            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
                                            transition duration-150 ease-in-out">
-                                加入黑名单
+                                加入黑   单
                             </button>
                             <button type="button" onclick="removeIpFromBlacklist()"
                                     class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-md shadow-md
@@ -290,6 +306,29 @@
                                            transition duration-150 ease-in-out">
                                 修改密码
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 批量增加题目部分 -->
+                <div id="batchAddQuestionsSection" class="section p-6 border border-gray-200 rounded-lg shadow-sm hidden">
+                    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">批量增加题目</h2>
+                    <div class="flex flex-col gap-4 max-w-md mx-auto">
+                        <div>
+                            <label for="numQuestions" class="block text-sm font-medium text-gray-700 mb-1">要增加的题目数量</label>
+                            <input type="number" id="numQuestions" value="10" min="1" max="100" required
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="flex justify-center">
+                            <button type="button" onclick="batchAddQuestions()"
+                                    class="px-6 py-2 bg-green-600 text-white font-semibold rounded-md shadow-md
+                                           hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                                           transition duration-150 ease-in-out">
+                                批量增加
+                            </button>
+                        </div>
+                        <div id="batchAddResult" class="mt-4 p-3 bg-gray-50 rounded-md text-sm text-gray-700 hidden">
+                            <!-- 批量增加结果将显示在这里 -->
                         </div>
                     </div>
                 </div>
@@ -630,7 +669,7 @@
          */
         function showSection(sectionId) {
             // Hide all content sections safely
-            const sections = ['statisticsSection', 'questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection']; // Added statisticsSection
+            const sections = ['statisticsSection', 'questionsSection', 'ipBlacklistSection', 'changePasswordSection', 'adminToolsSection', 'questionDetailsSection', 'batchAddQuestionsSection']; // Added batchAddQuestionsSection
             sections.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) { // Check if element exists before trying to access classList
@@ -658,6 +697,7 @@
             // Load data specific to the section if needed
             if (sectionId === 'statisticsSection') { // New condition for statistics
                 fetchQuestionCounts();
+                fetchSuspiciousIps(); // NEW: Fetch suspicious IPs when statistics section is shown
             } else if (sectionId === 'questionsSection') {
                 loadQuestions();
             } else if (sectionId === 'ipBlacklistSection') {
@@ -774,6 +814,79 @@
                 console.error('Change password error:', error);
                 showMessageBox('修改密码过程中发生错误。错误详情: ' + error.message);
             }
+        }
+
+        /**
+         * Fetches suspicious IP addresses (those with high submission counts) and displays them.
+         */
+        async function fetchSuspiciousIps() {
+            if (!WORKER_BASE_URL) {
+                console.error('WORKER_BASE_URL is not set for suspicious IP functions.');
+                return;
+            }
+
+            const suspiciousIpAlertsDiv = document.getElementById('suspiciousIpAlerts');
+            const suspiciousIpListUl = document.getElementById('suspiciousIpList');
+            const noSuspiciousIpsMessageP = document.getElementById('noSuspiciousIpsMessage');
+
+            suspiciousIpListUl.innerHTML = ''; // Clear previous list
+            suspiciousIpAlertsDiv.classList.add('hidden'); // Hide by default
+            noSuspiciousIpsMessageP.classList.add('hidden'); // Hide message by default
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/suspicious-ips`;
+            console.log('Fetching suspicious IPs from:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        console.warn('Not authorized to load suspicious IPs. Session might have expired.');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const suspiciousIps = data.ips || [];
+
+                if (suspiciousIps.length > 0) {
+                    suspiciousIpAlertsDiv.classList.remove('hidden');
+                    suspiciousIps.forEach(item => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('py-2', 'flex', 'justify-between', 'items-center');
+                        listItem.innerHTML = `
+                            <span>IP: <strong>${item.ip}</strong> (提交次数: ${item.count})</span>
+                            <button class="ml-4 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none"
+                                    onclick="addIpToBlacklistFromAlert('${item.ip}')">
+                                加入黑名单
+                            </button>
+                        `;
+                        suspiciousIpListUl.appendChild(listItem);
+                    });
+                } else {
+                    suspiciousIpAlertsDiv.classList.remove('hidden'); // Still show the section
+                    noSuspiciousIpsMessageP.classList.remove('hidden'); // Show "no suspicious IPs" message
+                }
+
+            } catch (error) {
+                console.error('Error fetching suspicious IPs:', error);
+                suspiciousIpAlertsDiv.classList.remove('hidden');
+                noSuspiciousIpsMessageP.classList.remove('hidden');
+                noSuspiciousIpsMessageP.textContent = `加载可疑 IP 失败: ${error.message}`;
+            }
+        }
+
+        /**
+         * Helper function to add an IP to blacklist directly from the alert.
+         * @param {string} ip - The IP address to blacklist.
+         */
+        async function addIpToBlacklistFromAlert(ip) {
+            document.getElementById('ipInput').value = ip; // Populate the IP input field
+            await addIpToBlacklist(); // Use the existing addIpToBlacklist function
+            fetchSuspiciousIps(); // Refresh suspicious IPs after blacklisting
         }
 
         /**
@@ -923,13 +1036,23 @@
             document.getElementById('downloadDescDetailBtn').onclick = () => downloadDescription(question._id, question.questionTitle);
             document.getElementById('downloadDataDetailBtn').onclick = () => downloadDataPackage(question._id, question.questionTitle);
 
-            // Hide approve/reject buttons if question is not pending
-            if (question.status !== 'pending') {
-                document.getElementById('approveDetailBtn').classList.add('hidden');
-                document.getElementById('rejectDetailBtn').classList.add('hidden');
-            } else {
+            // New: Delete button functionality
+            const deleteBtn = document.getElementById('deleteDetailBtn');
+            deleteBtn.onclick = () => deleteQuestion(question._id);
+
+            // Hide approve/reject/delete buttons based on question status
+            if (question.status === 'pending') {
                 document.getElementById('approveDetailBtn').classList.remove('hidden');
                 document.getElementById('rejectDetailBtn').classList.remove('hidden');
+                deleteBtn.classList.add('hidden'); // Hide delete for pending
+            } else if (question.status === 'rejected') {
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.add('hidden'); // Hide reject for rejected
+                deleteBtn.classList.remove('hidden'); // Show delete for rejected
+            } else { // approved or deleted
+                document.getElementById('approveDetailBtn').classList.add('hidden');
+                document.getElementById('rejectDetailBtn').classList.add('hidden');
+                deleteBtn.classList.add('hidden'); // Hide delete for approved/deleted
             }
         }
 
@@ -1130,6 +1253,113 @@
                 console.error('Error:', error);
                 showMessageBox('拒绝审核失败。错误详情: ' + error.message);
             });
+        }
+
+        /**
+         * Soft-deletes a question by sending a POST request to the backend.
+         * Clears sensitive data and sets status to 'deleted'.
+         * @param {string} questionId - The ID of the question to delete.
+         */
+        async function deleteQuestion(questionId) {
+            if (!WORKER_BASE_URL) {
+                showMessageBox('错误：WORKER_BASE_URL 未设置。请在代码中设置您的 Cloudflare Worker URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const confirmDelete = confirm('确定要删除此题目吗？删除后题目内容将被清空，仅保留ID和状态。此操作不可逆！');
+            if (!confirmDelete) {
+                return; // User cancelled
+            }
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/soft-delete/${questionId}`;
+            console.log('Soft-deleting question at:', fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include' // Crucial for sending cookies with this request
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessageBox(data.message);
+                    loadQuestions(); // Refresh the question list
+                    fetchQuestionCounts(); // Update statistics
+                    // If question details section is still open, hide it to show the list
+                    const questionDetailsSection = document.getElementById('questionDetailsSection');
+                    if (questionDetailsSection && !questionDetailsSection.classList.contains('hidden')) {
+                        showSection('questionsSection');
+                    }
+                } else {
+                    showMessageBox(data.message || '删除题目失败。');
+                }
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                showMessageBox('删除题目过程中发生错误。错误详情: ' + error.message);
+            }
+        }
+
+        /**
+         * Handles batch adding of questions for testing purposes.
+         * Sends a request to the backend to generate a specified number of mock questions.
+         */
+        async function batchAddQuestions() {
+            if (!WORKER_BASE_URL) {
+                showMessageBox('错误：WORKER_BASE_URL 未设置。请在代码中设置您的 Cloudflare Worker URL。');
+                console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
+                return;
+            }
+
+            const numQuestionsInput = document.getElementById('numQuestions');
+            const numQuestions = parseInt(numQuestionsInput.value, 10);
+            const batchAddResultDiv = document.getElementById('batchAddResult');
+
+            if (isNaN(numQuestions) || numQuestions < 1 || numQuestions > 100) {
+                showMessageBox('请输入一个介于 1 到 100 之间的有效题目数量。');
+                return;
+            }
+
+            batchAddResultDiv.classList.remove('hidden');
+            batchAddResultDiv.innerHTML = '正在生成题目，请稍候...';
+
+            const fetchURL = `${WORKER_BASE_URL}/admin/batch-add-questions`;
+            console.log(`Attempting to batch add ${numQuestions} questions to:`, fetchURL);
+
+            try {
+                const response = await fetch(fetchURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ count: numQuestions }),
+                    credentials: 'include' // Crucial for sending cookies with this request
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let resultHtml = `<p class="text-green-700">成功生成 ${data.generatedIds.length} 个题目！</p>`;
+                    if (data.generatedIds && data.generatedIds.length > 0) {
+                        resultHtml += '<p>生成的题目 ID:</p><ul>';
+                        data.generatedIds.forEach(id => {
+                            resultHtml += `<li>${id}</li>`;
+                        });
+                        resultHtml += '</ul>';
+                    }
+                    batchAddResultDiv.innerHTML = resultHtml;
+                    showMessageBox(data.message || `成功生成 ${data.generatedIds.length} 个题目！`);
+                    loadQuestions(); // Refresh the question list to show new questions
+                    fetchQuestionCounts(); // Update statistics
+                } else {
+                    batchAddResultDiv.innerHTML = `<p class="text-red-700">生成题目失败: ${data.message || '未知错误'}</p>`;
+                    showMessageBox(data.message || '生成题目失败。');
+                }
+            } catch (error) {
+                console.error('Error batch adding questions:', error);
+                batchAddResultDiv.innerHTML = `<p class="text-red-700">生成题目过程中发生错误: ${error.message}</p>`;
+                showMessageBox('生成题目过程中发生错误。错误详情: ' + error.message);
+            }
         }
 
         /**
