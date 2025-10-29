@@ -60,7 +60,7 @@ const loginAdmin = async () => {
     console.log('Attempting login to:', fetchURL);
 
     try {
-        const hashedPassword = await sha256(adminPassword.value);
+        const hashedPassword = adminPassword.value;
 
         const response = await fetch(fetchURL, {
             method: 'POST',
