@@ -36,20 +36,6 @@ const messageBoxRef = ref(null);
 const adminEmail = ref('');
 const adminPassword = ref('');
 
-/**
- * Calculates the SHA-256 hash of a given string.
- * @param {string} message - The string to hash.
- * @returns {Promise<string>} A promise that resolves with the SHA-256 hash in hexadecimal format.
- */
-async function sha256(message) {
-    const textEncoder = new TextEncoder();
-    const data = textEncoder.encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const byteArray = Array.from(new Uint8Array(hashBuffer));
-    const hexHash = byteArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hexHash;
-}
-
 const loginAdmin = async () => {
     if (!adminEmail.value || !adminPassword.value) {
         messageBoxRef.value.show('请输入管理员邮箱和密码。');
@@ -83,4 +69,5 @@ const loginAdmin = async () => {
     }
 };
 </script>
+
 
