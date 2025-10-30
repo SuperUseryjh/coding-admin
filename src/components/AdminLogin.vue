@@ -60,14 +60,12 @@ const loginAdmin = async () => {
     console.log('Attempting login to:', fetchURL);
 
     try {
-        const hashedPassword = adminPassword.value;
-
         const response = await fetch(fetchURL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ email: adminEmail.value, password: hashedPassword }),
+            body: JSON.stringify({ email: adminEmail.value, password: adminPassword.value }),
             credentials: 'include' // Crucial for sending and receiving cookies
         });
 
