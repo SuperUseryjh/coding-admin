@@ -16,7 +16,10 @@
         <!-- 右侧内容区域 -->
         <div class="w-full md:w-3/4 bg-white p-0 rounded-lg shadow-none">
             <!-- Statistics Section -->
-            <div v-show="activeSection === 'statisticsSection'" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <div v-show="activeSection === 'statisticsSection'" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm relative">
+                <div v-if="isStatisticsLoading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-200 h-12 w-12"></div>
+                </div>
                 <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">审核概览</h2>
                 <div id="statisticsPanel" class="bg-blue-50 p-6 rounded-lg">
                     <div class="flex justify-around text-center mb-8">
@@ -54,7 +57,10 @@
             </div>
 
             <!-- 题目列表部分 -->
-            <div v-show="activeSection === 'questionsSection'" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm">
+            <div v-show="activeSection === 'questionsSection'" class="section mb-8 p-6 border border-gray-200 rounded-lg shadow-sm relative">
+                <div v-if="isLoading" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-200 h-12 w-12"></div>
+                </div>
                 <h2 class="text-2xl font-semibold text-center mb-6 text-gray-700">题目列表</h2>
                 <div class="flex justify-center mb-4 space-x-4">
                     <select id="statusFilter" v-model="statusFilter" @change="loadQuestions"
@@ -295,6 +301,10 @@ const commentInputModalRef = ref(null);
 const activeSection = ref('statisticsSection');
 const canAddAdmin = ref(false);
 
+// Loading states
+const isLoading = ref(false); // For questions section
+const isStatisticsLoading = ref(false); // For statistics section
+
 // Statistics data
 const pendingCount = ref(0);
 const rejectedRatio = ref('0.00');
@@ -412,6 +422,7 @@ async function fetchQuestionCounts() {
         return;
     }
 
+    isStatisticsLoading.value = true; // Show loading for statistics
     pendingCount.value = '加载中...';
     rejectedRatio.value = '加载中...';
 
@@ -553,6 +564,8 @@ async function fetchQuestionCounts() {
         rejectedRatio.value = '加载失败';
         if (rejectedRatioChartInstance) { rejectedRatioChartInstance.destroy(); rejectedRatioChartInstance = null; }
         if (submissionTrendChartInstance) { submissionTrendChartInstance.destroy(); submissionTrendChartInstance = null; }
+    } finally {
+        isStatisticsLoading.value = false; // Hide loading for statistics
     }
 }
 
@@ -636,6 +649,8 @@ async function loadQuestions() {
         return;
     }
 
+    isLoading.value = true; // Show loading for questions
+
     const fetchURL = `${WORKER_BASE_URL}/admin/questions?status=${statusFilter.value}`;
     console.log('Fetching questions from:', fetchURL);
 
@@ -660,6 +675,8 @@ async function loadQuestions() {
     } catch (error) {
         console.error('Error loading questions:', error);
         messageBoxRef.value.show('加载题目列表失败。错误详情: ' + error.message);
+    } finally {
+        isLoading.value = false; // Hide loading for questions
     }
 }
 
@@ -1197,5 +1214,16 @@ onUnmounted(() => {
     background-color: #d1d5db; /* gray-300 */
     font-weight: 600;
     color: #1f2937; /* gray-900 */
+}
+
+/* Custom loader for loading screen */
+.loader {
+  border-top-color: #3498db; /* Blue color for the spinner */
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
