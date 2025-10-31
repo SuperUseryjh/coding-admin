@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import MessageBox from './MessageBox.vue';
 
 const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
@@ -101,6 +101,11 @@ const formData = ref({
     dataPackage: null,
 });
 
+const isLoading = ref(false); // Local loading state for the button
+
+const showLoadingGlobal = inject('showLoading');
+const hideLoadingGlobal = inject('hideLoading');
+
 const handleFileUpload = (event) => {
     formData.value.dataPackage = event.target.files[0];
 };
@@ -112,6 +117,14 @@ const submitQuestion = async () => {
         return;
     }
 
+    if (!formData.value.dataPackage) {
+        messageBoxRef.value.show('请上传数据包文件。');
+        return;
+    }
+
+    isLoading.value = true; // Disable button
+    showLoadingGlobal(); // Show global loading screen
+
     const data = new FormData();
     for (const key in formData.value) {
         if (key === 'dataPackage' && formData.value[key]) {
@@ -119,11 +132,6 @@ const submitQuestion = async () => {
         } else if (key !== 'dataPackage') {
             data.append(key, formData.value[key]);
         }
-    }
-
-    if (!formData.value.dataPackage) {
-        messageBoxRef.value.show('请上传数据包文件。');
-        return;
     }
 
     const fetchURL = `${WORKER_BASE_URL}/submit`;
@@ -159,6 +167,9 @@ const submitQuestion = async () => {
     } catch (error) {
         console.error('Error:', error);
         messageBoxRef.value.show('提交过程中发生错误。错误详情: ' + error.message);
+    } finally {
+        isLoading.value = false; // Re-enable button
+        hideLoadingGlobal(); // Hide global loading screen
     }
 };
 </script>
