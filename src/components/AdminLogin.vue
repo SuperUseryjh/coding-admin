@@ -59,6 +59,7 @@ const loginAdmin = async () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email: adminEmail.value, password: adminPassword.value }),
+            body: JSON.stringify({ email: adminEmail.value, password: adminPassword.value }),
             credentials: 'include' // Crucial for sending and receiving cookies
         });
 
@@ -79,3 +80,5 @@ const loginAdmin = async () => {
     }
 };
 </script>
+
+
