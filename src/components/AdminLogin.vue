@@ -28,7 +28,7 @@
 import { ref, inject } from 'vue';
 import MessageBox from './MessageBox.vue';
 
-const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+const WORKER_BASE_URL = "https://codingapi.yaoonion.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
 
 const emit = defineEmits(['login-success']);
 
