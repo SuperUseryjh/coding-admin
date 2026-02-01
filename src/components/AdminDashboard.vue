@@ -293,7 +293,7 @@ import Chart from 'chart.js/auto';
 import MessageBox from './MessageBox.vue';
 import CommentInputModal from './CommentInputModal.vue'; // Assuming you create this component
 
-const WORKER_BASE_URL = "https://codingapi.mr-onion-blog.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
+const WORKER_BASE_URL = "https://codingapi.yaoonion.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
 
 const messageBoxRef = ref(null);
 const commentInputModalRef = ref(null);
