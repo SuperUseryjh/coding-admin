@@ -13,10 +13,7 @@
     <!-- Developer Info Footer (Moved here to be consistent across all pages) -->
     <footer class="mt-8 py-4 text-center text-gray-600 text-sm">
         <div class="container mx-auto">
-            <p>开发者信息：Mr_Onion</p>
-            <p>联系邮箱：admin@mr-onion-blog.fun</p>
-            <p>开发者首页：<a href="https://mr-onion-blog.fun" target="_blank" class="text-blue-600 hover:underline">Mr_Onion's Blog</a></p>
-            <p class="mt-2">&copy; 2025 C++ Coding组题目审核系统. All rights reserved.</p>
+            <p class="mt-2">&copy; 2026 C++ Coding组题目审核系统. All rights reserved.</p>
         </div>
     </footer>
   </div>
