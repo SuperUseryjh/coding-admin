@@ -68,11 +68,16 @@
                               file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
             </div>
 
+            <div class="md:col-span-2">
+                <div id="recaptcha-container"></div>
+                <p v-if="!recaptchaToken" class="mt-1 text-sm text-red-600">请完成人机验证。</p>
+            </div>
+
             <div class="md:col-span-2 flex justify-center">
-                <button type="submit"
+                <button type="submit" :disabled="!recaptchaToken || isLoading"
                         class="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md
                                hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                               transition duration-150 ease-in-out">
+                               transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
                     提交题目申请
                 </button>
             </div>
@@ -83,8 +88,30 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
+import { ref, inject, onMounted } from 'vue';
 import MessageBox from './MessageBox.vue';
+
+const recaptchaToken = ref('');
+
+const renderRecaptcha = () => {
+    if (window.grecaptcha) {
+        window.grecaptcha.render('recaptcha-container', {
+            'sitekey': '6LdxTmksAAAAAOpK-8YDACESf_MTYDk78xnTh60S',
+            'callback': (token) => {
+                recaptchaToken.value = token;
+            },
+            'expired-callback': () => {
+                recaptchaToken.value = '';
+            }
+        });
+    } else {
+        setTimeout(renderRecaptcha, 100);
+    }
+};
+
+onMounted(() => {
+    renderRecaptcha();
+});
 
 const WORKER_BASE_URL = "https://codingapi.yaoonion.fun"; // <<< 请在此处替换为您的 Cloudflare Worker URL
 
@@ -111,6 +138,11 @@ const handleFileUpload = (event) => {
 };
 
 const submitQuestion = async () => {
+    if (!recaptchaToken.value) {
+        messageBoxRef.value.show('请完成人机验证。');
+        return;
+    }
+
     if (WORKER_BASE_URL === "YOUR_CLOUDFLARE_WORKER_URL_HERE" || !WORKER_BASE_URL) {
         messageBoxRef.value.show('错误：请在代码中设置 WORKER_BASE_URL。');
         console.error('WORKER_BASE_URL is not set. Please configure your Cloudflare Worker URL.');
@@ -133,6 +165,7 @@ const submitQuestion = async () => {
             data.append(key, formData.value[key]);
         }
     }
+    data.append('recaptchaToken', recaptchaToken.value); // Add recaptcha token
 
     const fetchURL = `${WORKER_BASE_URL}/submit`;
     console.log('Submitting question to:', fetchURL);
@@ -163,6 +196,9 @@ const submitQuestion = async () => {
             dataPackage: null,
         };
         document.getElementById('dataPackage').value = ''; // Clear file input manually
+        if (window.grecaptcha) {
+            window.grecaptcha.reset(); // Reset reCAPTCHA after successful submission
+        }
 
     } catch (error) {
         console.error('Error:', error);
