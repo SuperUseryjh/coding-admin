@@ -96,7 +96,7 @@ const recaptchaToken = ref('');
 const renderRecaptcha = () => {
     if (window.grecaptcha) {
         window.grecaptcha.render('recaptcha-container', {
-            'sitekey': '6LdxTmksAAAAAOpK-8YDACESf_MTYDk78xnTh60S',
+            'sitekey': '6LeiVmosAAAAADfQGhAKy4UAtSBiaDsfndKNe1f2',
             'callback': (token) => {
                 recaptchaToken.value = token;
             },
